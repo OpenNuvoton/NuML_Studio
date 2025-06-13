@@ -1,0 +1,10 @@
+python sdsio-server.py serial -p COM8 --baudrate 115200 --outdir ./out_dir
+sdsio_server.exe serial -p COM8 --baudrate 115200 --outdir sds_out_dir
+
+python sds-view.py -y out_dir/Accelerometer.sds.yml -s out_dir/Accelerometer.1.sds
+sds_view.exe -y sds_out_dir/Accelerometer.sds.yml -s sds_out_dir/Accelerometer.2.sds
+
+python sds-convert.py simple_csv  -i out_dir/Accelerometer.9.sds -o out_dir/Accelerometer_9_simple.csv -y out_dir/Accelerometer.sds.yml --normalize --label W --ei-export
+sds_convert.exe simple_csv  -i sds_out_dir/Accelerometer.2.sds -o sds_out_dir/Accelerometer_2_simple.csv -y sds_out_dir/Accelerometer.sds.yml --normalize --label W --ei-export
+
+NuML_tool_cli.exe generate --model_file models\ei-g-sensor-test2-classifier-tensorflow-lite-int8-quantized-model.3.tflite --board NuMaker-M55M1 --output_path C:\gen_proj_vscode --project_type vscode --vs_ex_type sds_gsensor

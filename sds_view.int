@@ -1,0 +1,20 @@
+#  vim: set ts=4 sw=4 tw=0 et ft=python :
+import os
+import sys
+from app.sds_utilities.sds_view import start
+
+msg = 'Hello from %s'%(os.path.abspath(__file__))
+print(msg)
+print()
+
+for path in sys.path:
+    print('>', path)
+
+#os.MessageBox(msg)
+
+# Enter Point
+if __name__ == "__main__":
+    start()
+    # test/cmd style
+    #start(['-y', 'sds_out_dir/Accelerometer.sds.yml', '-s', 'sds_out_dir/Accelerometer.4.sds'])
+
