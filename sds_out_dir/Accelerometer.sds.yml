@@ -1,0 +1,20 @@
+sds:
+  name: Accelerometer
+  description: Accelerometer with 1667Hz sample rate
+  frequency: 100
+  content:
+  - value: x
+    type: float
+    scale: 1
+    unit: G
+    # offset: -2
+  - value: y
+    type: float
+    scale: 1
+    unit: G
+    # offset: -2
+  - value: z
+    type: float
+    scale: 1
+    unit: G
+    # offset: -2
