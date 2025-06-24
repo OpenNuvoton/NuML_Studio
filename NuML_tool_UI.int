@@ -1,11 +1,20 @@
 #  vim: set ts=4 sw=4 tw=0 et ft=python :
 import os
 import sys
+import requests
 from app.MainWindowControl import start
 
 msg = 'Hello from %s'%(os.path.abspath(__file__))
 print(msg)
 print()
+
+CA_FILE_PATH = r'..\Websense Public Primary Certificate Authority.crt'
+if os.path.exists(CA_FILE_PATH):
+    os.environ['REQUESTS_CA_BUNDLE'] = CA_FILE_PATH
+    print(f"Adding CA from {CA_FILE_PATH}\n")
+    #print(os.environ['REQUESTS_CA_BUNDLE'])
+    #print(requests.certs.where())
+    #response = requests.post("https://httpbin.org/post", data={"key": "value"})  
 
 for path in sys.path:
     print('>', path)

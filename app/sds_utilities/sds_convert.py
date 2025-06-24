@@ -52,7 +52,7 @@ def ingestion_edgeimpulse(file):
                             files=(('data', (i, open(
                                 i, 'rb'), 'csv')) for i in files),
                             timeout=30  # Set timeout to 30 seconds
-                            , verify=False
+                            #verify=False
                             )
 
         if (res.status_code == 200):

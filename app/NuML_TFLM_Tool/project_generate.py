@@ -1,4 +1,5 @@
 import os
+import sys
 import git
 import shutil
 import subprocess
@@ -249,9 +250,9 @@ def prepare_proj_resource(board_info, project_path, templates_path, vela_model_f
     print('copy example template project to autogen MachineLearning example folder')
     shutil.copytree(example_template_path,
                     example_project_path, dirs_exist_ok=True)
+    
     example_project_path = os.path.join(
         example_project_path, 'NN_ModelInference')
-
     example_project_model_cpp_file = os.path.join(
         example_project_path, 'Model', 'NN_Model_INT8.tflite.cpp')
     example_project_model_dir = os.path.join(example_project_path, 'Model')
@@ -280,6 +281,16 @@ def prepare_proj_resource(board_info, project_path, templates_path, vela_model_f
         progen_dest_path, 'tools'), dirs_exist_ok=True)
     shutil.copyfile(os.path.join(progen_src_path, 'project.yaml'),
                     os.path.join(progen_dest_path, 'project.yaml'))
+    
+    # vscode setting
+    vscode_set_path = os.path.join(templates_path, board_info[1], board_info[0], 'vscode_set')
+    vscode_set_project_path = bsp_dest_path
+
+    print(vscode_set_path)
+    print(vscode_set_project_path)
+
+    print('copy .vscode to project folder')
+    shutil.copytree(vscode_set_path, vscode_set_project_path, dirs_exist_ok=True)
 
     return example_project_path
 
@@ -414,12 +425,23 @@ def prepare_vscode_sds_proj_resource(board_info, project_path, templates_path, v
 
 
 def proj_gen(progen_path, project_type, project_dir_name):
+    # update to uvision5_armc6
+    if project_type == 'vscode':
+        project_type = 'uvision5_armc6'
     cur_work_dir = os.getcwd()
     os.chdir(progen_path)
     progen_cmd = ['progen', 'generate', '-f',
                   'project.yaml', '-p', 'NN_ModelInference']
     progen_cmd.append('-t')
     progen_cmd.append(project_type)
+
+    #For embeded python
+    python_dir = os.path.dirname(sys.executable)
+    if python_dir.count('NuML_embedded'): # the python executable is in the project which means it's embedded python
+        progen_path = os.path.join(python_dir, 'Scripts', 'progen.exe')
+        progen_cmd[0] = progen_path
+    print(progen_cmd)
+
     ret = subprocess.run(progen_cmd)
     if ret.returncode == 0:
         print('Success generation')
@@ -468,7 +490,7 @@ def project_generate(args):
             break
 
     # download SDS BSP
-    if args.project_type == 'vscode' and args.vs_ex_type == 'sds_gsensor':
+    if args.vs_ex_type == 'sds_gsensor':
         download_sds_bsp(templates_path)
 
     if board_found == False:
@@ -518,7 +540,7 @@ def project_generate(args):
     print(vela_model_cc_file)
 
     # prepare project resource
-    if args.project_type == 'vscode' and args.vs_ex_type == 'sds_gsensor':
+    if args.vs_ex_type == 'sds_gsensor':
         project_example_path = prepare_vscode_sds_proj_resource(
             board_info, project_path, templates_path, vela_model_file, vela_model_cc_file)
     else:
@@ -584,13 +606,12 @@ def project_generate(args):
 
     # Generate main.cpp file
     main_file_path = os.path.join(project_example_path, 'main.cpp')
-    if args.project_type == 'vscode' and args.vs_ex_type == 'sds_gsensor':
-        main_temp_file_path = os.path.join(
-            templates_path, 'main_sds_mpu6500_ex.cpp.template')
+    if args.vs_ex_type == 'sds_gsensor':
+        main_temp_file_path = os.path.join(templates_path, 'main_sds_mpu6500_ex.cpp.template')
     else:
         main_temp_file_path = os.path.join(templates_path, 'main.cpp.template')
-    print(f'template path {main_temp_file_path}')
-    print(f'main file path {main_file_path}')
+    print(f'template path: {main_temp_file_path}')
+    print(f'main file path: {main_file_path}')
 
     try:
         main_temp_file = open(main_temp_file_path, "r", encoding="utf-8")
@@ -605,7 +626,7 @@ def project_generate(args):
         return 'unable_generate'
 
     with main_file:
-        if args.project_type == 'vscode' and args.vs_ex_type == 'sds_gsensor':
+        if args.vs_ex_type == 'sds_gsensor':
             main_codegen = MainSDSCCodegen()
         else:
             main_codegen = MainCCodegen()
@@ -615,7 +636,7 @@ def project_generate(args):
     os.remove(vela_model_file)
     os.remove(vela_model_cc_file)
 
-    if args.project_type == 'vscode':  # vscode project is already generated from coping SDS BSP
+    if args.project_type == 'vscode' and args.vs_ex_type == 'sds_gsensor':  # vscode project is already generated from copying SDS BSP
         print(
             f'NN_ModelInference example project completed at {os.path.abspath(project_example_path)}')
     else:  # start generate project file (*.uvprojx, Makefile)

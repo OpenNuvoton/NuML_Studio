@@ -5,7 +5,8 @@ import sys
 '''
 Update the system path to include your testing application directory
 '''
-from app.MainWindowControl import start
+#from app.MainWindowControl import start
+from app.NuML_TFLM_Tool.numl_tool import start 
 
 print()
 msg = 'Hello from %s'%(os.path.abspath(__file__))
@@ -20,6 +21,10 @@ for path in sys.path:
 
 # Enter Point
 if __name__ == "__main__":
-    start()
     # test/cmd style
+    #start()
+    
+    start(['generate', '--model_file', 'models\ei-g-sensor-test2-classifier-tensorflow-lite-int8-quantized-model.3.tflite', 
+    '--board', 'NuMaker-M55M1', '--output_path', 'C:\gen_proj_vscode_1', 
+    '--project_type', 'uvision5_armc6', '--vs_ex_type', 'tflite_only'])
 

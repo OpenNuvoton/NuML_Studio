@@ -1,18 +1,26 @@
 NuML_embedded
 ===
-### Embedded UI version of NuML_Toolkit and collecting data Tool. This tool can be excuted without installing python and relative libs on Windows
+### This is the embedded UI version of the NuML_Toolkit and data collection tool. It can be executed on Windows without the need to install Python or any related libraries.
 
 ## Tools
-- `NuML_TFLM_Tool`: Tool for machine learning project generate base on TFLM framework. Reference from [NuML_Tool_TFLM](https://github.com/MaxCYCHEN/NuML_Toolkit).
-- `sds_utilities`: Collecting data to local PC or uploading data to Edge Impulse. Reference from [SDS-Framework](https://github.com/ARM-software/SDS-Framework) and Edge Impulse.
+- `NuML_TFLM_Tool`: A tool for generating machine learning projects based on the TFLM framework. It is based on and references the [NuML_Tool_TFLM](https://github.com/MaxCYCHEN/NuML_Toolkit).
+- `sds_utilities`: A tool for collecting data to a local PC or uploading it to Edge Impulse. Based on the [SDS-Framework](https://github.com/ARM-software/SDS-Framework) and Edge Impulse.
 
 ## How this works
 - Download from release.
-- Double click the `NuML_tool_UI.exe`.
-    - If you want to upload to Edge Impulse, and please update your project API on `API_key.txt`
-- Others `*.exe` are CMD program, please check the examples in `cmd.exe` or `-h`
+- Double-click `NuML_tool_UI.exe` to launch the tool.
+    - If you want to upload to Edge Impulse, please update your project API key in `API_key.txt`.
+- Other `*.exe` files are command-line programs. Please refer to the examples in `cmd.txt` or use the `-h` option for help.
+    - Users can update the corresponding `*.int` file for each `*.exe` to perform testing, or execute the program without entering parameters.
 
 ## Build youself
-- Reference from [Python Releases for Windows](https://www.python.org/downloads/windows/) and [PyStand](https://github.com/skywind3000/PyStand)
-- Download embedded Python `3.10.6` and copy to `runtime`
-- In python `venv`, pip install the `requirements.txt`, and copy the `site-packages`. ⚠️ **Warning**: The version of python virtual env must be the same as the embedded version.
+- References:
+    - [Python Releases for Windows](https://www.python.org/downloads/windows/)
+
+    - [PyStand](https://github.com/skywind3000/PyStand)
+- Steps:
+
+- Download the embedded Python `3.10.6` and copy it to the `runtime` directory.
+
+- In a Python virtual environment (venv), use pip to install the dependencies listed in `requirements.txt`, then copy the `site-packages` directory.
+⚠️ **Warning**: The version of the Python virtual environment must exactly match the embedded Python version.

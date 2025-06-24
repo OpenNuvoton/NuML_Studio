@@ -1,0 +1,311 @@
+project:
+  packs:
+    - pack: Nuvoton::NuMicro_DFP
+  setups:
+    - output:
+        # bin, elf, hex, lib
+        type: bin
+    - setup: Options for Project
+      processor:
+        fpu: dp
+        mve: fp
+        endian: little
+        trustzone: "off"
+      add-path:
+        - ..
+        - ../../../../ThirdParty/ml-embedded-evaluation-kit/source/application/api/common/include
+        - ../../../../ThirdParty/ml-embedded-evaluation-kit/source/log/include
+        - ../../../../ThirdParty/ml-embedded-evaluation-kit/source/math/include
+        - ../../../../ThirdParty/ml-embedded-evaluation-kit/source/application/main/include
+        - ../../../../ThirdParty/ml-embedded-evaluation-kit/source/profiler/include
+        - ../../../../Library/CMSIS/Core/Include
+        - ../../../../Library/Device/Nuvoton/M55M1/Include
+        - ../Device/include
+        - ../../../../Library/StdDriver/inc
+        - ../../../../Library/StdDriver/inc/npu
+        - ../../../../ThirdParty/FatFs/source
+        - ../../../../Library/CMSIS/NN/Include
+        - ../../../../Library/CMSIS/DSP/Include
+        - ../../../../ThirdParty/tflite_micro
+        - ../../../../ThirdParty/tflite_micro/_deps/tensorflow-flatbuffers-src/include
+        - ../../../../ThirdParty/tflite_micro/_deps/tensorflow-gemlowp-src
+        - ../../../../ThirdParty/ml-embedded-evaluation-kit/source/math
+        - ../Model/include
+        - ../NPU/include
+        - ../ProfilerCounter/include
+      define:
+        - NVT_VECTOR_ON_FLASH
+        - TF_LITE_STATIC_MEMORY
+        - ARM_MATH_DSP
+        - ARM_NPU
+        - ACTIVATION_BUF_SZ: "0x100000"
+      misc:
+        - for-compiler: AC6
+          C:
+            - -std=c11
+          C-CPP:
+            - -fno-exceptions -fno-rtti -funsigned-char -fshort-enums
+              -fshort-wchar -ffunction-sections -fdata-sections -w
+          CPP:
+            - -xc++
+            - -std=c++14
+          ASM:
+            - -masm=auto
+            #- -DNVT_VECTOR_ON_FLASH -DTF_LITE_STATIC_MEMORY -DARM_MATH_DSP -DARM_NPU -DACTIVATION_BUF_SZ=0x100000
+          Link:
+            - --map --load_addr_map_info --xref --callgraph --symbols
+            - --info sizes --info totals --info unused --info veneers
+            - --strict --summary_stderr --info summarysizes
+            - --diag_suppress 6314
+        - for-compiler: GCC
+          C:
+            - -std=gnu11
+          C-CPP:
+            - -mthumb -masm-syntax-unified -fmessage-length=0 -fsigned-char
+              -ffunction-sections -fdata-sections
+          Link:
+            - -mthumb -fmessage-length=0 -fsigned-char --specs=nano.specs
+              --specs=nosys.specs
+            - -Wl,--gc-sections,-Map="$elf()$.map"  
+  linker:
+    - script: armcc.scatter
+      for-compiler: AC6
+    - script: ../../../../Library/Device/Nuvoton/M55M1/Source/GCC/M55M1.ld
+      for-compiler: GCC
+  groups:
+    - group: Application
+      files:
+        - file: ../BoardInit.cpp
+        - file: ../main.cpp
+        - file: ../ModelFileReader.c
+    - group: ArmMLApi
+      files:
+        - file: ../../../../ThirdParty/ml-embedded-evaluation-kit/source/application/api/common/source/Model.cpp
+        - file: ../../../../ThirdParty/ml-embedded-evaluation-kit/source/math/PlatformMath.cpp
+        - file: ../../../../ThirdParty/ml-embedded-evaluation-kit/source/profiler/Profiler.cpp
+        - file: ../../../../ThirdParty/ml-embedded-evaluation-kit/source/application/api/common/source/TensorFlowLiteMicro.cpp
+    - group: CMSIS
+      files:
+        - file: ../../../../Library/Device/Nuvoton/M55M1/Source/startup_M55M1.c
+        - file: ../../../../Library/Device/Nuvoton/M55M1/Source/system_M55M1.c
+    - group: Device
+      files:
+        - file: ../../../../Library/Storage/diskio_SDH.c
+        - file: ../Device/HyperRAM/hyperram_code.c
+        - file: ../Device/SDCard/sdglue.c
+    - group: Driver
+      files:
+        - file: ../../../../Library/StdDriver/src/clk.c
+        - file: ../../../../Library/StdDriver/src/npu/ethosu_device_u55_u65.c
+        - file: ../../../../Library/StdDriver/src/npu/ethosu_driver.c
+        - file: ../../../../Library/StdDriver/src/npu/ethosu_pmu.c
+        - file: ../../../../Library/StdDriver/src/gpio.c
+        - file: ../../../../Library/StdDriver/src/retarget.c
+        - file: ../../../../Library/StdDriver/src/sdh.c
+        - file: ../../../../Library/StdDriver/src/spim_hyper.c
+        - file: ../../../../Library/StdDriver/src/sys.c
+        - file: ../../../../Library/StdDriver/src/uart.c
+    - group: FatFs
+      files:
+        - file: ../../../../ThirdParty/FatFs/source/ff.c
+        - file: ../../../../ThirdParty/FatFs/source/ffunicode.c
+    - group: Lib
+      files:
+        - file: ../../../../Library/CMSIS/Lib/KEIL/cmsis_dsp.lib
+        - file: ../../../../Library/CMSIS/Lib/KEIL/cmsis_nn.lib
+        - file: ../../../../ThirdParty/tflite_micro/Lib/tflu.lib
+    - group: Model
+      files:
+        - file: ../Model/NN_Model_INT8.tflite.cpp
+        - file: ../Model/NNModel.cpp
+    - group: NPU
+      files:
+        - file: ../NPU/ethosu_cpu_cache.c
+        - file: ../NPU/ethosu_npu_init.c
+        - file: ../NPU/ethosu_profiler.c
+    - group: ProfilerCounter
+      files:
+        - file: ../ProfilerCounter/pmu_counter.c
+    #- group: default
+    #  files:
+    #    - file: ../../../../Library/StdDriver/inc/acmp.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/acmp_reg.h
+    #    - file: ../../../../Library/CMSIS/DSP/Include/arm_common_tables.h
+    #    - file: ../../../../Library/CMSIS/DSP/Include/arm_common_tables_f16.h
+    #    - file: ../../../../Library/CMSIS/DSP/Include/arm_const_structs.h
+    #    - file: ../../../../Library/CMSIS/DSP/Include/arm_const_structs_f16.h
+    #    - file: ../../../../Library/CMSIS/DSP/Include/arm_helium_utils.h
+    #    - file: ../../../../Library/CMSIS/DSP/Include/arm_math.h
+    #    - file: ../../../../Library/CMSIS/DSP/Include/arm_math_f16.h
+    #    - file: ../../../../Library/CMSIS/DSP/Include/arm_math_memory.h
+    #    - file: ../../../../Library/CMSIS/DSP/Include/arm_math_types.h
+    #    - file: ../../../../Library/CMSIS/DSP/Include/arm_math_types_f16.h
+    #    - file: ../../../../Library/CMSIS/DSP/Include/arm_mve_tables.h
+    #    - file: ../../../../Library/CMSIS/DSP/Include/arm_mve_tables_f16.h
+    #    - file: ../../../../Library/CMSIS/NN/Include/arm_nn_math_types.h
+    #    - file: ../../../../Library/CMSIS/NN/Include/arm_nn_tables.h
+    #    - file: ../../../../Library/CMSIS/NN/Include/arm_nn_types.h
+    #    - file: ../../../../Library/CMSIS/NN/Include/arm_nnfunctions.h
+    #    - file: ../../../../Library/CMSIS/NN/Include/arm_nnsupportfunctions.h
+    #    - file: ../../../../Library/CMSIS/DSP/Include/arm_vec_math.h
+    #    - file: ../../../../Library/CMSIS/DSP/Include/arm_vec_math_f16.h
+    #    - file: ../../../../Library/StdDriver/inc/awf.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/awf_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/bpwm.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/bpwm_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/canfd.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/canfd_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/ccap.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/ccap_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/clk.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/clk_reg.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/cmsis_armclang.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/cmsis_clang.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/cmsis_compiler.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/cmsis_gcc.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/cmsis_version.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_ca.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_cm0.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_cm0plus.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_cm1.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_cm23.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_cm3.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_cm33.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_cm35p.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_cm4.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_cm52.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_cm55.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_cm7.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_cm85.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_sc000.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_sc300.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/core_starmc1.h
+    #    - file: ../../../../Library/StdDriver/inc/crc.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/crc_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/crypto.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/crypto_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/dac.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/dac_reg.h
+    #    - file: ../../../../ThirdParty/FatFs/source/diskio.h
+    #    - file: ../../../../Library/StdDriver/inc/dmic.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/dmic_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/eadc.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/eadc_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/ebi.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/ebi_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/ecap.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/ecap_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/epwm.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/epwm_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/eqei.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/eqei_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/npu/ethosu_driver.h
+    #    - file: ../NPU/include/ethosu_mem_config.h
+    #    - file: ../NPU/include/ethosu_npu_init.h
+    #    - file: ../NPU/include/ethosu_profiler.h
+    #    - file: ../../../../Library/StdDriver/inc/npu/ethosu_types.h
+    #    - file: ../../../../ThirdParty/FatFs/source/ff.h
+    #    - file: ../../../../ThirdParty/FatFs/source/ffconf.h
+    #    - file: ../ffconf_M55M1.h
+    #    - file: ../../../../Library/StdDriver/inc/fmc.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/fmc_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/gpio.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/gpio_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/hsotg.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/hsotg_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/hsusbd.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/hsusbd_reg.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/hsusbh_reg.h
+    #    - file: ../Device/include/hyperram_code.h
+    #    - file: ../../../../Library/StdDriver/inc/i2c.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/i2c_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/i2s.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/i2s_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/i3c.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/i3c_reg.h
+    #    - file: ../../../../ThirdParty/FatFs/source/integer.h
+    #    - file: ../../../../Library/StdDriver/inc/kdf.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/kdf_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/kpi.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/kpi_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/ks.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/ks_reg.h
+    #    - file: ../../../../ThirdParty/ml-embedded-evaluation-kit/source/log/include/log_macros.h
+    #    - file: ../../../../ThirdParty/ml-embedded-evaluation-kit/source/log/include/log_macros.h
+    #    - file: ../../../../Library/StdDriver/inc/lpadc.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/lpadc_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/lpgpio.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/lpgpio_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/lpi2c.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/lpi2c_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/lppdma.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/lppdma_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/lpspi.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/lpspi_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/lptmr.h
+    #    - file: ../../../../Library/StdDriver/inc/lptmr_pwm.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/lptmr_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/lpuart.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/lpuart_reg.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/M55M1.h
+    #    - file: ../ModelFileReader.h
+    #    - file: ../mpu_config_M55M1.h
+    #    - file: ../../../../Library/StdDriver/inc/mpu_config_M55M1_template.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/NuMicro.h
+    #    - file: ../../../../Library/StdDriver/inc/otfc.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/otfc_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/otg.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/otg_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/partition_M55M1_template.h
+    #    - file: ../../../../Library/StdDriver/inc/pdma.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/pdma_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/pmc.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/pmc_reg.h
+    #    - file: ../ProfilerCounter/include/pmu_counter.h
+    #    - file: ../../../../Library/StdDriver/inc/npu/pmu_ethosu.h
+    #    - file: ../../../../Library/StdDriver/inc/psio.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/psio_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/qspi.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/qspi_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/rng.h
+    #    - file: ../../../../Library/StdDriver/inc/rtc.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/rtc_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/sc.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/sc_reg.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/scu_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/scuart.h
+    #    - file: ../../../../Library/StdDriver/inc/sdh.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/sdh_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/spi.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/spi_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/spim.h
+    #    - file: ../../../../Library/StdDriver/inc/spim_hyper.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/spim_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/sys.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/sys_reg.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/system_M55M1.h
+    #    - file: ../../../../Library/StdDriver/inc/timer.h
+    #    - file: ../../../../Library/StdDriver/inc/timer_pwm.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/timer_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/trng.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/trng_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/ttmr.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/ttmr_reg.h
+    #    - file: ../../../../Library/CMSIS/Core/Include/tz_context.h
+    #    - file: ../../../../Library/StdDriver/inc/uart.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/uart_reg.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/ui2c_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/usbd.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/usbd_reg.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/usbh_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/usci_i2c.h
+    #    - file: ../../../../Library/StdDriver/inc/usci_spi.h
+    #    - file: ../../../../Library/StdDriver/inc/usci_uart.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/uspi_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/utcpd.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/utcpd_reg.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/uuart_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/wdt.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/wdt_reg.h
+    #    - file: ../../../../Library/StdDriver/inc/wwdt.h
+    #    - file: ../../../../Library/Device/Nuvoton/M55M1/Include/wwdt_reg.h

@@ -10,3 +10,4 @@ from .NNModel_hpp_codegen import *
 from .NNModel_cpp_codegen import *
 from .main_cpp_codegen import *
 from .main_sds_cpp_codegen import *
+from .ei_upload import *

@@ -1,6 +1,7 @@
 #  vim: set ts=4 sw=4 tw=0 et ft=python :
 import os
 import sys
+import subprocess
 from app.NuML_TFLM_Tool.numl_tool import start 
 
 msg = 'Hello from %s'%(os.path.abspath(__file__))
@@ -17,6 +18,10 @@ if __name__ == "__main__":
     start()
     # test/cmd style
     #start(['generate', '--model_file', 'models\ei-g-sensor-test2-classifier-tensorflow-lite-int8-quantized-model.3.tflite', 
-    #'--board', 'NuMaker-M55M1', '--output_path', 'C:\gen_proj_vscode', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:\gen_proj_vscode_1', 
     #'--project_type', 'vscode', '--vs_ex_type', 'sds_gsensor'])
+
+    #start(['generate', '--model_file', 'models\ei-g-sensor-test2-classifier-tensorflow-lite-int8-quantized-model.3.tflite', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:\gen_proj_1', 
+    #'--project_type', 'uvision5_armc6', '--vs_ex_type', 'tflite_only'])
 

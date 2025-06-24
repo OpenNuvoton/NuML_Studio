@@ -4,10 +4,12 @@ MainWindow Control for UI_MainWindow.py
 
 import sys
 import os
+from pathlib import Path
 
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
-from PyQt5.QtGui import QTextCursor
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QDialog
+from PyQt5.QtGui import QTextCursor, QPixmap
 from PyQt5.QtCore import QObject, pyqtSignal, QThread
+from PyQt5 import uic
 #from PyQt5 import QtGui
 from .Ui_MainWindow import Ui_MainWindow
 
@@ -15,6 +17,7 @@ from .sds_utilities import sds_view
 from .sds_utilities import sdsio_server
 from .sds_utilities import sds_convert
 from .NuML_TFLM_Tool import numl_tool
+from .NuML_TFLM_Tool.ei_upload import EiUploadDir
 
 temp = sys.stdout
 class Stream(QObject):
@@ -23,6 +26,23 @@ class Stream(QObject):
         self.newText.emit(str(text))
         # 实时刷新界面
         QApplication.processEvents()
+
+class PlotDialog(QDialog):
+    def __init__(self, image_path=None):
+        super().__init__()
+        uic.loadUi("app/plot_sds.ui", self)
+
+        if image_path:
+            self.load_image(image_path)
+        else:
+            self.imageLabel.setText("No image loaded.")
+
+    def load_image(self, image_path):
+        pixmap = QPixmap(image_path)
+        if pixmap.isNull():
+            self.imageLabel.setText("Failed to load image.")
+        else:
+            self.imageLabel.setPixmap(pixmap)     
 
 class myMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -33,6 +53,7 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_sdsioServer_2.clicked.connect(self.on_btn_sdsioServer_2_clicked)
         self.btn_sdsView_2.clicked.connect(self.on_btn_sdsView_2_clicked)
         self.btn_sdsConvert_2.clicked.connect(self.on_btn_sdsConvert_2_clicked)
+        self.btn_eiUpload_2.clicked.connect(self.on_btn_eiupload_2_clicked)
 
         # print output to textEdit 
         sys.stdout = Stream(newText=self.onUpdateEdit_sds)
@@ -41,6 +62,7 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
         self.tabWidget.currentChanged.connect(self.on_tab_changed)
 
         # sds view connect
+        self.open_windows = []
         self.pushButton_3_yamlF_2.clicked.connect(self.show_textEdit_yamlFile)
         self.pushButton_2_sdsF_2.clicked.connect(self.show_textEdit_sdsFile)
         self.pushButton_sdsview_2.clicked.connect(self.execute_sds_view)
@@ -62,6 +84,10 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_7.clicked.connect(self.execute_numltool)
         self.comboBox_5.currentTextChanged.connect(self.handleComboBox5Change)
 
+        # EI upload connect
+        self.pushButton_5_sdsF_3.clicked.connect(self.choose_upload_dir)
+        self.pushButton_sdsConvert_3.clicked.connect(self.execute_eiupload)
+
 
     def on_btn_sdsioServer_2_clicked(self):
         self.stackedWidget_sds.setCurrentWidget(self.page_sdsio_server_2)
@@ -74,6 +100,10 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
     def on_btn_sdsConvert_2_clicked(self):
         self.stackedWidget_sds.setCurrentWidget(self.page_sds_convert_2)
         #print("SDS Convert button clicked")
+
+    def on_btn_eiupload_2_clicked(self):
+        self.stackedWidget_sds.setCurrentWidget(self.page_ei_upload)
+        #print("EI Upload button clicked")    
 
     def on_tab_changed(self, index):
         if self.tabWidget.widget(index) == self.SDS_tab_2:
@@ -125,6 +155,13 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
         
         print(f"Executing SDS view with YAML: {yaml_file} and SDS: {sds_file}")
         sds_view.start(['-y', yaml_file, '-s', sds_file])
+        # Open the plot dialog with the image path
+        file_path = os.path.join(Path(sds_file).parent, 'myplot.png')
+        if file_path:
+            plot_window = PlotDialog(file_path)
+            plot_window.show()
+            self.open_windows.append(plot_window)
+
         print("SDS view executed done.")
 
     def show_textEdit_sdsio_outdir(self):
@@ -264,7 +301,35 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
         if numl_type == "Generate project":
             numl_tool.start(['generate', '--model_file', tflite_model, '--board', board, 
                              '--output_path', out_proj_path, '--project_type', proj_type, '--vs_ex_type', vscode_ex_type])
-        print("NuML_TFLM_Tool executed done.")    
+        print("NuML_TFLM_Tool executed done.")
+
+    def choose_upload_dir(self):
+        folderpath = QFileDialog.getExistingDirectory(
+            self,
+            "Select Folder",
+            ".",  # Default directory set to C:/
+            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
+        )
+        # show folder path in textEdit
+        self.textEdit_10_sdsF_3.setPlainText(folderpath)
+        self.textEdit_10_sdsF_3.ensureCursorVisible()
+
+    def execute_eiupload(self):
+        folderpath = self.textEdit_10_sdsF_3.toPlainText()
+        category = self.comboBox_serverType_convertFormat_3.currentText()
+        label = self.textEdit_6.toPlainText()
+
+        ei_upload = EiUploadDir()
+        if label == 'None':
+            label = None
+
+        # Upload the directory to Edge Impulse
+        try:
+            ei_upload.upload_dir(folderpath, category, label)
+        except RuntimeError as e:
+            # Handle the error gracefully
+            print(f"Error in thread: {e}")    
+
         
 
 #if __name__ == '__main__':
