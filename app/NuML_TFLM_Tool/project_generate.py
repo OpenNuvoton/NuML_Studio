@@ -428,25 +428,29 @@ def proj_gen(progen_path, project_type, project_dir_name):
     # update to uvision5_armc6
     if project_type == 'vscode':
         project_type = 'uvision5_armc6'
+
     cur_work_dir = os.getcwd()
     os.chdir(progen_path)
-    progen_cmd = ['progen', 'generate', '-f',
-                  'project.yaml', '-p', 'NN_ModelInference']
-    progen_cmd.append('-t')
-    progen_cmd.append(project_type)
 
-    #For embeded python
     python_dir = os.path.dirname(sys.executable)
+    #For embeded python
     if python_dir.count('NuML_embedded'): # the python executable is in the project which means it's embedded python
-        progen_path = os.path.join(python_dir, 'Scripts', 'progen.exe')
-        progen_cmd[0] = progen_path
-    print(progen_cmd)
+        embedded_py_path = os.path.join(python_dir, 'runtime', 'python.exe')
+        subprocess.run([embedded_py_path, '-m', 'project_generator', 'generate', 
+                        '-f', 'project.yaml', '-p', 'NN_ModelInference'])
 
-    ret = subprocess.run(progen_cmd)
-    if ret.returncode == 0:
-        print('Success generation')
     else:
-        print('Unable generation')
+        progen_cmd = ['progen', 'generate', '-f',
+                      'project.yaml', '-p', 'NN_ModelInference']
+        progen_cmd.append('-t')
+        progen_cmd.append(project_type)
+
+        print(progen_cmd)
+        ret = subprocess.run(progen_cmd)
+        if ret.returncode == 0:
+            print('Success generation')
+        else:
+            print('Unable generation')
 
     # copy project file to project folder
     toolchain_project = project_type + '_' + project_dir_name
@@ -472,8 +476,6 @@ def proj_gen(progen_path, project_type, project_dir_name):
     os.chdir(cur_work_dir)
 
 # project generate main function
-
-
 def project_generate(args):
     print(f"project type is {args.project_type}")
     templates_path = args.templates_path
