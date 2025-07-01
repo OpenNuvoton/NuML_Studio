@@ -123,6 +123,7 @@ class sdsio_manager:
             file_obj.close()
 
     def __open(self, mode, name):
+        print(f"mode: {mode}, {name}\n")
         cmd = 1
         # prepare error response
         resp_err = bytearray()
