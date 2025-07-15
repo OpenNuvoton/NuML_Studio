@@ -417,6 +417,9 @@ class sdsio_server_serial:
 
         self.open()
         print("Serial Server started.")
+        print("Click BTN1 on NuMaker board to start recording.")
+        print("Click BTN1 on NuMaker board again to close recording.")
+        print("Disconnect the USB to release the server service.")
         buffer = bytearray()
         read_fail_count = 0
         # Continuously read from the serial port in a blocking manner.
