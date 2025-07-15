@@ -49,17 +49,13 @@ def ingestion_edgeimpulse(file):
                                 'x-api-key': EI_API_KEY,
                             },
                             # Creating the data payload for the request.
-                            files=(('data', (i, open(
-                                i, 'rb'), 'csv')) for i in files),
+                            files=(('data', (i, open(i, 'rb'), Path(i).suffix.lstrip('.'))) for i in files),
                             timeout=30  # Set timeout to 30 seconds
                             #verify=False
                             )
 
         if (res.status_code == 200):
-            print('Uploaded file(s) to Edge Impulse\n',
-                  res.status_code,
-                  # res.content
-                  )
+            print('Uploaded file(s) to Edge Impulse\n')
         else:
             print('Failed to upload file(s) to Edge Impulse\n',
                   res.status_code, res.content)
@@ -541,6 +537,7 @@ def write_SDS_AudioWAV(framerate, data, meta_data):
     n_channels = len(meta_data)
     d_type = getDataType(meta_data[0]["type"])
     sample_width = calcsize(d_type)
+    print(n_channels, sample_width, framerate)
 
     # Set audio parameters and write binary data to file
     wave_file.setnchannels(n_channels)
@@ -599,6 +596,12 @@ def main(argv=None):
     parser_audio_wav_optional = parser_audio_wav.add_argument_group("optional")
     parser_audio_wav_optional.add_argument("-y", dest="yaml", metavar="<yaml_file>",
                                            help="YAML sensor description file", nargs="+", default=None)
+    parser_audio_wav_optional.add_argument("--ei-export", dest="ei_export",
+                                            help="EdgeImpulse WAV ver.", action="store_true")
+    parser_audio_wav_optional.add_argument("--label", dest="label", metavar="'label'",
+                                            help="Class label for wav (EI needed) (default: %(default)s)", default='None')
+    parser_audio_wav_optional.add_argument("--normalize", dest="normalize",
+                                            help="Redundant, no used", action="store_true")
 
     # Simple CSV
     parser_simple_csv = subparsers.add_parser(
@@ -730,7 +733,6 @@ def main(argv=None):
                     args, data[sensor_name[0]], meta_data[sensor_name[0]], sensor_frequency[sensor_name[0]])
 
             if args.ei_export:
-                # Upload CSV file to EdgeImpulse
                 print('Start uploading to Edge Impulse...\n')
                 try:
                     ingestion_edgeimpulse(filename)
@@ -748,8 +750,15 @@ def main(argv=None):
     # WAV
     elif "wav" in args.convert_format:
         if 'sds' in in_extension:
-            filename = other_files.split('.wav')[0]
-            createWAV(filename)
+
+            if args.ei_export:
+                filename = Path(other_files[0]).stem
+                dir_path = Path(other_files[0]).parent
+                filename = dir_path / f"{args.label}.{filename}.wav"
+            else:
+                filename = other_files[0]
+
+            createWAV(str(filename).split('.wav', maxsplit=1)[0])
 
             if args.convert_format == "audio_wav":
                 # Only used for one sensor
@@ -758,6 +767,13 @@ def main(argv=None):
                         "Audio WAV file format only supports 1 metadata and 1 SDS file")
                 write_SDS_AudioWAV(
                     sensor_frequency[sensor_name[0]], data[sensor_name[0]], meta_data[sensor_name[0]])
+                
+                if args.ei_export:
+                   print('Start uploading to Edge Impulse...\n')
+                   try:
+                       ingestion_edgeimpulse(filename)
+                   except Exception as e:
+                       raise
         else:
             sys.exit('WAV to SDS conversion is not supported.')
 

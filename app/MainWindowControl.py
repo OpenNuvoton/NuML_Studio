@@ -16,8 +16,15 @@ from .Ui_MainWindow import Ui_MainWindow
 from .sds_utilities import sds_view
 from .sds_utilities import sdsio_server
 from .sds_utilities import sds_convert
+from .sds_utilities import sds_flash_fw
 from .NuML_TFLM_Tool import numl_tool
 from .NuML_TFLM_Tool.ei_upload import EiUploadDir
+
+record_fw_list = [
+    # combox's text, firmware binary filename, baudrate of uart recording
+    ['G-sensor (X, Y, Z)', 'SDS_Recorder_gsensor_uart_CMSIS.bin', 115200],
+    ['Audio (16kHZ)', 'SDS_Recorder_audio_uart_CMSIS.bin', 921600],
+]
 
 temp = sys.stdout
 class Stream(QObject):
@@ -42,18 +49,30 @@ class PlotDialog(QDialog):
         if pixmap.isNull():
             self.imageLabel.setText("Failed to load image.")
         else:
-            self.imageLabel.setPixmap(pixmap)     
+            self.imageLabel.setPixmap(pixmap)    
+
+class FlashThread(QThread):
+
+    finished = pyqtSignal(str)  # signal to send status back to UI
+
+    def __init__(self, board, data_type):
+        super().__init__()
+        self.board = board
+        self.data_type = data_type
+        self.setTerminationEnabled(True)  # allow thread to be stopped gracefully
+
+    def run(self):
+        ret = sds_flash_fw.start(['--board', self.board, '--binary_file', self.data_type])
+
+        if ret != 0:
+            self.finished.emit(f"Error flashing firmware: {ret}")  # notify UI when done
+        else:    
+            self.finished.emit("Flashing complete!")  # notify UI when done             
 
 class myMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-
-        # connect signals and slots (sds functions btn <=> page change)
-        self.btn_sdsioServer_2.clicked.connect(self.on_btn_sdsioServer_2_clicked)
-        self.btn_sdsView_2.clicked.connect(self.on_btn_sdsView_2_clicked)
-        self.btn_sdsConvert_2.clicked.connect(self.on_btn_sdsConvert_2_clicked)
-        self.btn_eiUpload_2.clicked.connect(self.on_btn_eiupload_2_clicked)
 
         # print output to textEdit 
         sys.stdout = Stream(newText=self.onUpdateEdit_sds)
@@ -66,6 +85,10 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_3_yamlF_2.clicked.connect(self.show_textEdit_yamlFile)
         self.pushButton_2_sdsF_2.clicked.connect(self.show_textEdit_sdsFile)
         self.pushButton_sdsview_2.clicked.connect(self.execute_sds_view)
+
+        # SDS firmware flash
+        self.pushButton_sdsioServer_3.clicked.connect(self.execute_sds_flash_fw)
+        self.thread_flash_fw = QThread()
 
         # sdsio server connect
         self.pushButton_outputDir_2.clicked.connect(self.show_textEdit_sdsio_outdir)
@@ -86,24 +109,7 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
 
         # EI upload connect
         self.pushButton_5_sdsF_3.clicked.connect(self.choose_upload_dir)
-        self.pushButton_sdsConvert_3.clicked.connect(self.execute_eiupload)
-
-
-    def on_btn_sdsioServer_2_clicked(self):
-        self.stackedWidget_sds.setCurrentWidget(self.page_sdsio_server_2)
-        #print("SDS IO Server button clicked")
-
-    def on_btn_sdsView_2_clicked(self):
-        self.stackedWidget_sds.setCurrentWidget(self.page_sds_view_2)
-        #print("SDS View button clicked")   
-
-    def on_btn_sdsConvert_2_clicked(self):
-        self.stackedWidget_sds.setCurrentWidget(self.page_sds_convert_2)
-        #print("SDS Convert button clicked")
-
-    def on_btn_eiupload_2_clicked(self):
-        self.stackedWidget_sds.setCurrentWidget(self.page_ei_upload)
-        #print("EI Upload button clicked")    
+        self.pushButton_sdsConvert_3.clicked.connect(self.execute_eiupload)    
 
     def on_tab_changed(self, index):
         if self.tabWidget.widget(index) == self.SDS_tab_2:
@@ -170,6 +176,44 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
         # show file path in textEdit
         self.textEdit_outputDir_2.setPlainText(folderpath)
         self.textEdit_outputDir_2.ensureCursorVisible()
+
+    def execute_sds_flash_fw(self):
+        
+        binary_file = None
+
+        board = self.comboBox_7.currentText()
+        data_type = self.comboBox_8.currentText()
+        if not board or not data_type:
+            print("Error: Missing board or data_type parameters.")
+            return
+
+        # corrsponding data_type to firmware binary file 
+        for fw_list_item in record_fw_list:
+            if data_type == fw_list_item[0]:
+                binary_file = fw_list_item[1]
+
+                # update baudrate to textEdit
+                self.textEdit_Baudrate_2.setPlainText(str(fw_list_item[2]))
+                self.textEdit_Baudrate_2.ensureCursorVisible()
+
+                break
+        binary_file = os.path.join('app', 'sds_firmware', board, binary_file)
+
+        if not os.path.isfile(binary_file):
+            print(f"Error: Firmware binary file {binary_file} not found.")
+        else:
+            # disable button
+            self.pushButton_sdsioServer_3.setEnabled(False)
+            self.pushButton_sdsioServer_2.setEnabled(False)
+            self.thread_flash_fw = FlashThread(board, binary_file)
+            self.thread_flash_fw.finished.connect(self.on_flash_done)
+            self.thread_flash_fw.start()
+
+    def on_flash_done(self, message):
+        print(message)
+        self.pushButton_sdsioServer_3.setEnabled(True)
+        self.pushButton_sdsioServer_2.setEnabled(True)     
+
 
     def execute_sdsio_server(self):
         server_type = self.comboBox_serverType_2.currentText()
