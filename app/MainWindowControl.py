@@ -7,23 +7,28 @@ import os
 from pathlib import Path
 
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QDialog
-from PyQt5.QtGui import QTextCursor, QPixmap
-from PyQt5.QtCore import QObject, pyqtSignal, QThread
+from PyQt5.QtGui import QTextCursor, QPixmap, QImage
+from PyQt5.QtCore import QObject, pyqtSignal, QThread, QTimer, Qt
 from PyQt5 import uic
 #from PyQt5 import QtGui
 from .Ui_MainWindow import Ui_MainWindow
+from .UI_cam_capture import Ui_WebcamWindow
 
 from .sds_utilities import sds_view
 from .sds_utilities import sdsio_server
 from .sds_utilities import sds_convert
-from .sds_utilities import sds_flash_fw
+from .sds_utilities import flash_fw
 from .NuML_TFLM_Tool import numl_tool
 from .NuML_TFLM_Tool.ei_upload import EiUploadDir
+
+from datetime import datetime
+import cv2
 
 record_fw_list = [
     # combox's text, firmware binary filename, baudrate of uart recording
     ['G-sensor (X, Y, Z)', 'SDS_Recorder_gsensor_uart_CMSIS.bin', 115200],
     ['Audio (16kHZ)', 'SDS_Recorder_audio_uart_CMSIS.bin', 921600],
+    ['Image', 'HSUSBD_Video_CAM.bin', ' '],
 ]
 
 temp = sys.stdout
@@ -49,7 +54,94 @@ class PlotDialog(QDialog):
         if pixmap.isNull():
             self.imageLabel.setText("Failed to load image.")
         else:
-            self.imageLabel.setPixmap(pixmap)    
+            self.imageLabel.setPixmap(pixmap)
+
+class WebcamWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_WebcamWindow()
+        self.ui.setupUi(self)
+
+        self.cap = None
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_frame)
+        self.current_frame = None
+        self.output_dir = r"sds_out_dir/images"
+        os.makedirs(self.output_dir, exist_ok=True)
+
+        self.populate_cameras()
+        self.populate_resolutions()
+
+        # Initialize status bar
+        self.statusBar()
+
+        # Connect UI buttons
+        self.ui.pushButton_3.clicked.connect(self.start_camera)
+        self.ui.pushButton.clicked.connect(self.capture_image)
+        self.ui.pushButton_2.clicked.connect(self.close_app)
+
+    def populate_cameras(self):
+        self.ui.camera_selector.clear()
+        for i in range(2):
+            cap = cv2.VideoCapture(i, cv2.CAP_DSHOW)
+            if cap.isOpened():
+                self.ui.camera_selector.addItem(f"Camera {i}", i)
+                cap.release()
+
+    def populate_resolutions(self):
+        resolutions = ["640x480", "320x240"]
+        self.ui.resolution_selector.addItems(resolutions)
+
+    def start_camera(self):
+        if self.cap and self.cap.isOpened():
+            self.cap.release()
+
+        device_index = self.ui.camera_selector.currentData()
+        resolution = self.ui.resolution_selector.currentText()
+        width, height = map(int, resolution.split('x'))
+
+        self.cap = cv2.VideoCapture(device_index)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
+        if not self.cap.isOpened():
+            QMessageBox.critical(self, "Error", f"Cannot open camera {device_index}")
+            return
+
+        self.timer.start(30)                 
+
+    def update_frame(self):
+        if not self.cap:
+            return
+        ret, frame = self.cap.read()
+        if not ret:
+            return
+        self.current_frame = frame
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb_frame.shape
+        bytes_per_line = ch * w
+        qimg = QImage(rgb_frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
+        self.ui.image_label.setPixmap(QPixmap.fromImage(qimg))
+
+    def capture_image(self):
+        if self.current_frame is not None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = os.path.join(self.output_dir, f"capture_{timestamp}.jpg")
+            cv2.imwrite(filename, self.current_frame)
+            print(f"[INFO] Captured: {filename}")
+            self.statusBar().showMessage(f"Image captured: capture_{timestamp}.jpg", 2000)
+
+    def close_app(self):
+        self.timer.stop()
+        if self.cap and self.cap.isOpened():
+            self.cap.release()
+        self.close()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_C:
+            self.capture_image()
+        elif event.key() == Qt.Key_Escape:
+            self.close_app()        
 
 class FlashThread(QThread):
 
@@ -62,7 +154,7 @@ class FlashThread(QThread):
         self.setTerminationEnabled(True)  # allow thread to be stopped gracefully
 
     def run(self):
-        ret = sds_flash_fw.start(['--board', self.board, '--binary_file', self.data_type])
+        ret = flash_fw.start(['--board', self.board, '--binary_file', self.data_type])
 
         if ret != 0:
             self.finished.emit(f"Error flashing firmware: {ret}")  # notify UI when done
@@ -87,6 +179,7 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_sdsview_2.clicked.connect(self.execute_sds_view)
 
         # SDS firmware flash
+        self.populate_firmwares()
         self.pushButton_sdsioServer_3.clicked.connect(self.execute_sds_flash_fw)
         self.thread_flash_fw = QThread()
 
@@ -109,7 +202,11 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
 
         # EI upload connect
         self.pushButton_5_sdsF_3.clicked.connect(self.choose_upload_dir)
-        self.pushButton_sdsConvert_3.clicked.connect(self.execute_eiupload)    
+        self.pushButton_sdsConvert_3.clicked.connect(self.execute_eiupload)
+
+        # Webcam capture connect
+        self.webcam_window = None
+        self.pushButton.clicked.connect(self.open_webcam_capture)
 
     def on_tab_changed(self, index):
         if self.tabWidget.widget(index) == self.SDS_tab_2:
@@ -177,6 +274,10 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
         self.textEdit_outputDir_2.setPlainText(folderpath)
         self.textEdit_outputDir_2.ensureCursorVisible()
 
+    def populate_firmwares(self):
+        fws = [item[0] for item in record_fw_list]
+        self.comboBox_8.addItems(fws)
+
     def execute_sds_flash_fw(self):
         
         binary_file = None
@@ -197,7 +298,7 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
                 self.textEdit_Baudrate_2.ensureCursorVisible()
 
                 break
-        binary_file = os.path.join('app', 'sds_firmware', board, binary_file)
+        binary_file = os.path.join('app', 'mcu_firmware', board, binary_file)
 
         if not os.path.isfile(binary_file):
             print(f"Error: Firmware binary file {binary_file} not found.")
@@ -372,7 +473,15 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
             ei_upload.upload_dir(folderpath, category, label)
         except RuntimeError as e:
             # Handle the error gracefully
-            print(f"Error in thread: {e}")    
+            print(f"Error in thread: {e}")
+
+    def open_webcam_capture(self):
+        if self.webcam_window is None or not self.webcam_window.isVisible():
+            self.webcam_window = WebcamWindow()
+            self.webcam_window.show()
+        else:
+            self.webcam_window.raise_()
+            self.webcam_window.activateWindow()          
 
         
 
