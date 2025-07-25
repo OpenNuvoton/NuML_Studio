@@ -3,7 +3,6 @@ import re
 import shutil
 import subprocess
 
-
 def uvision5_build(args, proj_file_dir, proj_name):
     print('checking build tool ...')
     uv4_util = args.ide_tool
@@ -29,7 +28,6 @@ def uvision5_build(args, proj_file_dir, proj_name):
     else:
         return None
 
-
 def make_gcc_build(args, proj_file_dir, proj_name):
     print(proj_file_dir)
     print('checking build tool ...')
@@ -42,8 +40,7 @@ def make_gcc_build(args, proj_file_dir, proj_name):
     make_util = shutil.which('make')
 
     if make_util == None:
-        make_util = os.path.join(os.path.dirname(
-            __file__), '..', 'tools', 'make-3.81-bin', 'bin', 'make.exe')
+        make_util = os.path.join(os.path.dirname(__file__), '..', 'tools', 'make-3.81-bin', 'bin', 'make.exe')
         if not os.path.isfile(make_util):
             print('make not found')
             return None
@@ -65,23 +62,18 @@ def make_gcc_build(args, proj_file_dir, proj_name):
         os.chdir(cur_work_dir)
         return None
 
-
 project_type_list = [
     ['Makefile', make_gcc_build],
     ['uvprojx', uvision5_build]
 ]
 
-
 def add_build_parser(subparsers, _):
     """Include parser for 'build' subcommand"""
     parser = subparsers.add_parser("build", help="build ml project")
     parser.set_defaults(func=project_build)
-    parser.add_argument(
-        "--project_path", help="specify prjoect path", required=True)
-    parser.add_argument(
-        "--project_type", help="specify project type uvision5_armc6/make_gcc_arm", default='make_gcc_arm')
+    parser.add_argument("--project_path", help="specify prjoect path", required=True)
+    parser.add_argument("--project_type", help="specify project type uvision5_armc6/make_gcc_arm", default='make_gcc_arm')
     parser.add_argument("--ide_tool", help="specify IDE tool")
-
 
 def project_build(args):
     print('checking prjoect type ...')

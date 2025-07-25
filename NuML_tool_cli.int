@@ -15,13 +15,32 @@ for path in sys.path:
 
 # Enter Point
 if __name__ == "__main__":
-    start()
+    #start()
     # test/cmd style
-    #start(['generate', '--model_file', 'models\ei-g-sensor-test2-classifier-tensorflow-lite-int8-quantized-model.3.tflite', 
-    #'--board', 'NuMaker-M55M1', '--output_path', 'C:\gen_proj_vscode_1', 
-    #'--project_type', 'vscode', '--vs_ex_type', 'sds_gsensor'])
-
-    #start(['generate', '--model_file', 'models\ei-g-sensor-test2-classifier-tensorflow-lite-int8-quantized-model.3.tflite', 
+    #start(['generate', '--model_file', 'models/ei-g-sensor-test2-classifier-tensorflow-lite-int8-quantized-model.3.tflite', 
     #'--board', 'NuMaker-M55M1', '--output_path', 'C:\gen_proj_1', 
-    #'--project_type', 'uvision5_armc6', '--vs_ex_type', 'tflite_only'])
+    #'--project_type', 'uvision5_armc6', '--application', 'generic'])
+
+    #start(['generate', '--model_file', 'models/vww_mobilenetv3_1.0_96_96_int8quant_min.tflite', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_2', 
+    #'--project_type', 'uvision5_armc6', '--application', 'imgclass'])
+
+    #start(['generate', '--model_file', 'models/ei-g-sensor-test2-classifier-tensorflow-lite-int8-quantized-model.3.tflite', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_3', 
+    #'--project_type', 'uvision5_armc6', '--application', 'gsensor_sds'])
+
+    #start(['generate', '--model_file', 'models/ei-g-sensor-test2-classifier-tensorflow-lite-int8-quantized-model.3.tflite', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:\gen_proj_4', 
+    #'--project_type', 'vscode', '--application', 'generic'])
+
+    #start(['generate', '--model_file', 'models/vww_mobilenetv3_1.0_96_96_int8quant_min.tflite',
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:\gen_proj_5', 
+    #'--project_type', 'vscode', '--application', 'imgclass', '--model_arena_size', '39000'])
+
+    start(['generate', '--model_file', 'models/ei-g-sensor-test2-classifier-tensorflow-lite-int8-quantized-model.3.tflite', 
+    '--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_6', 
+    '--project_type', 'vscode', '--application', 'gsensor_sds', '--model_arena_size', '10000'])
+
+
+    
 

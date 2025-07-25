@@ -60,3 +60,6 @@ class EiUploadDir():
         except RuntimeError as e:
             # Handle the error gracefully
             print(f"Error in thread: {e}")
+        except Exception as e:
+            # Handle all other exceptions gracefully
+            print(f"An unexpected error occurred: {e}")    

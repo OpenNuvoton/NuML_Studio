@@ -1,17 +1,20 @@
-import os
+import argparse
+import logging
 import sys
+import os
+import pathlib
 import git
 import shutil
 import subprocess
+import tarfile
 import stat
 
 from git import RemoteProgress
 from tqdm import tqdm
 
-from .NNModel_hpp_codegen import NNModelHppCodegen
-from .NNModel_cpp_codegen import NNModelCppCodegen
-from .main_cpp_codegen import MainCCodegen
-from .main_sds_cpp_codegen import MainSDSCCodegen
+from .generic_codegen.generic_codegen import GenericCodegen
+from .imgclass_codegen.imgclass_codegen import ImgClassCodegen
+from .sdsgsensor_codegen.sdsgsensor_codegen import SdsGsensorCodegen
 
 PROJECT_GEN_DIR_PREFIX = 'ProjGen_'
 
@@ -19,8 +22,7 @@ board_list = [
     # board name, MCU, BSP name, BSP URL
     # ['NuMaker-M467HJ', 'M467', 'm460BSP', 'git@github.com:OpenNuvoton/m460bsp.git'],
     # ['NuMaker-M467HJ', 'M467', 'm460bsp', 'https://github.com/OpenNuvoton/m460bsp.git'],
-    ['NuMaker-M55M1', 'M55M1', 'M55M1BSP',
-        'https://github.com/OpenNuvoton/M55M1BSP.git'],
+    ['NuMaker-M55M1', 'M55M1', 'M55M1BSP', 'https://github.com/OpenNuvoton/M55M1BSP.git'],
 ]
 
 sds_list = ['M55M1_SDS_inference_example',
@@ -28,9 +30,30 @@ sds_list = ['M55M1_SDS_inference_example',
 
 project_type_list = ['uvision5_armc6', 'make_gcc_arm', 'vscode']
 
+application = {
+    "generic"   : {
+                    "board": ['NuMaker-M55M1'],
+                    "example_tmpl_dir": "generic_template",
+                    "example_tmpl_proj": "NN_ModelInference"
+                  },
+    "imgclass"  : {
+                    "board": ['NuMaker-M55M1'],
+                    "example_tmpl_dir": "imgclass_template",
+                    "example_tmpl_proj": "NN_ImgClassInference"
+                  },
+    "objdet"  : {
+                    "board": ['NuMaker-M55M1'],
+                    "example_tmpl_dir": "objdet_template",
+                    "example_tmpl_proj": "NN_ObjDetInference"
+                  },
+    "gsensor_sds"  : {
+                    "board": ['NuMaker-M55M1'],
+                    "example_tmpl_dir": "SDS", # This is from sds_list dir structure
+                    "example_tmpl_proj": "NN_ModelInference_SDS" # This is from sds_list dir structure
+                     },            
+}
+
 # git clone progress status
-
-
 class CloneProgress(RemoteProgress):
     def __init__(self):
         super().__init__()
@@ -42,35 +65,25 @@ class CloneProgress(RemoteProgress):
         self.pbar.refresh()
 
 # add project generate argument parser
-
-
 def add_generate_parser(subparsers, _):
     """Include parser for 'generate' subcommand"""
     parser = subparsers.add_parser("generate", help="generate ml project")
     parser.set_defaults(func=project_generate)
-    parser.add_argument(
-        "--model_file", help="specify tflte file", required=True)
-    parser.add_argument(
-        "--output_path", help="specify output file path", required=True)
-    parser.add_argument(
-        "--board", help="specify target board name", required=True)
-    parser.add_argument(
-        "--project_type", help="specify project type uvision5_armc6/make_gcc_arm/vscode", default='make_gcc_arm')
-    parser.add_argument(
-        "--vs_ex_type", help="specify VSCode project example type : tflite_only/sds_gsensor/(more in the future)", default='tflite_only')
+    parser.add_argument("--model_file", help="specify tflte file", type=str, required=True)
+    parser.add_argument("--output_path", help="specify output file path", required=True)
+    parser.add_argument("--board", help="specify target board name", required=True)
+    parser.add_argument("--project_type", help="specify project type uvision5_armc6/make_gcc_arm/vscode", default='make_gcc_arm')
     parser.add_argument("--templates_path", help="specify template path")
+    parser.add_argument("--model_arena_size", help="specify the size of arena cache memory in bytes", default='0')
+    parser.add_argument("--application", help="specify application scenario generic/imgclass/gsensor_sds", default='generic')
 
 # download board BSP
-
-
 def download_bsp(board_info, templates_path):
     bsp_path = os.path.join(templates_path, board_info[2])
     if os.path.isdir(bsp_path):
         return
     print(f'git clone BSP {board_info[3]} {templates_path}')
-    git.Repo.clone_from(
-        board_info[3], bsp_path, branch='master', recursive=False, progress=CloneProgress())
-
+    git.Repo.clone_from(board_info[3], bsp_path, branch='master', recursive=False, progress=CloneProgress())
 
 def download_sds_bsp(templates_path):
     bsp_path = os.path.join(templates_path, sds_list[0])
@@ -81,9 +94,7 @@ def download_sds_bsp(templates_path):
         sds_list[1], bsp_path, recursive=False, progress=CloneProgress())
 
 # INT8 model compile by vela
-
-
-def model_compile(board_info, output_path, vela_dir_path, model_file):
+def model_compile(board_info, output_path, vela_dir_path, model_file, model_arena_size):
     cur_work_dir = os.getcwd()
     os.chdir(output_path)
     vela_exe = os.path.join(vela_dir_path, 'vela-4_0_1.exe')
@@ -92,10 +103,13 @@ def model_compile(board_info, output_path, vela_dir_path, model_file):
     print(output_path)
     print(vela_conifg_option)
     print(model_file)
+    print(model_arena_size)
     print(vela_exe)
 
-    vela_cmd = [vela_exe, model_file, '--accelerator-config=ethos-u55-256', '--optimise=Performance',
-                vela_conifg_option, '--memory-mode=Shared_Sram', '--system-config=Ethos_U55_High_End_Embedded', '--output-dir=.']
+    vela_cmd = [vela_exe, model_file, '--accelerator-config=ethos-u55-256', '--optimise=Performance', vela_conifg_option, '--memory-mode=Shared_Sram', '--system-config=Ethos_U55_High_End_Embedded', '--output-dir=.']
+
+    if int(model_arena_size) > 0:
+        vela_cmd.extend(['--arena-cache-size', model_arena_size])
 
     print(vela_cmd)
     ret = subprocess.run(vela_cmd)
@@ -109,24 +123,19 @@ def model_compile(board_info, output_path, vela_dir_path, model_file):
     return True
 
 # parse vela summary file to get memory usage information
-
-
 def vela_summary_parse(summary_file):
     usecols = ['sram_memory_used', 'off_chip_flash_memory_used']
     df = pandas.read_csv(summary_file, usecols=usecols)
-    return df.iloc[0, 0]*1024, df.iloc[0, 1]*1024
+    return df.iloc[0,0]*1024, df.iloc[0,1]*1024
 
 # generate tflite cpp file
-
-
 def generate_model_cpp(output_path, tflite2cpp_dir_path, model_file):
     cur_work_dir = os.getcwd()
     print(cur_work_dir)
     os.chdir(output_path)
     model2cpp_exe = os.path.join(tflite2cpp_dir_path, 'gen_model_cpp.exe')
     template_dir = os.path.join(tflite2cpp_dir_path, 'templates')
-    model2cpp_cmd = [model2cpp_exe, '--tflite_path', model_file, '--output_dir',
-                     '.', '--template_dir', template_dir, '-ns', 'arm', '-ns', 'app', '-ns', 'nn']
+    model2cpp_cmd = [model2cpp_exe, '--tflite_path', model_file, '--output_dir','.', '--template_dir', template_dir, '-ns', 'arm', '-ns', 'app', '-ns', 'nn']
     print(model2cpp_cmd)
 
     ret = subprocess.run(model2cpp_cmd)
@@ -139,8 +148,7 @@ def generate_model_cpp(output_path, tflite2cpp_dir_path, model_file):
     os.chdir(cur_work_dir)
     return True
 
-
-def prepare_proj_resource(board_info, project_path, templates_path, vela_model_file, vela_model_cc_file):
+def prepare_proj_resource(board_info, project_path, templates_path, vela_model_file, vela_model_cc_file, example_tmpl_dir, example_tmpl_proj):
     print('copy resources to autogen project directory')
 
     bsp_lib_src_path = os.path.join(templates_path, board_info[2], 'Library')
@@ -148,139 +156,110 @@ def prepare_proj_resource(board_info, project_path, templates_path, vela_model_f
     print('copy bsp library to autogen project directory')
     """ Temp del for testing
     """
-    shutil.copytree(bsp_lib_src_path, bsp_lib_dest_path, dirs_exist_ok=True)
+    shutil.copytree(bsp_lib_src_path, bsp_lib_dest_path, dirs_exist_ok = True)
 
-    bsp_thirdparty_src_path = os.path.join(
-        templates_path, board_info[2], 'ThirdParty')
-    bsp_thirdparty_dest_path = os.path.join(
-        project_path, board_info[2], 'ThirdParty')
+    bsp_thirdparty_src_path = os.path.join(templates_path, board_info[2], 'ThirdParty')
+    bsp_thirdparty_dest_path = os.path.join(project_path, board_info[2], 'ThirdParty')
 
-    bsp_thirdparty_tflite_micro_src_path = os.path.join(
-        bsp_thirdparty_src_path, 'tflite_micro')
-    bsp_thirdparty_tflite_micro_dest_path = os.path.join(
-        bsp_thirdparty_dest_path, 'tflite_micro')
+    bsp_thirdparty_tflite_micro_src_path = os.path.join(bsp_thirdparty_src_path, 'tflite_micro')
+    bsp_thirdparty_tflite_micro_dest_path = os.path.join(bsp_thirdparty_dest_path, 'tflite_micro')
     print('copy BSP ThirdParty tflite_micro ...')
-    shutil.copytree(bsp_thirdparty_tflite_micro_src_path,
-                    bsp_thirdparty_tflite_micro_dest_path, dirs_exist_ok=True)
+    shutil.copytree(bsp_thirdparty_tflite_micro_src_path, bsp_thirdparty_tflite_micro_dest_path, dirs_exist_ok = True)
 
-    bsp_thirdparty_fatfs_src_path = os.path.join(
-        bsp_thirdparty_src_path, 'FatFs')
-    bsp_thirdparty_fatfs_dest_path = os.path.join(
-        bsp_thirdparty_dest_path, 'FatFs')
+    bsp_thirdparty_fatfs_src_path = os.path.join(bsp_thirdparty_src_path, 'FatFs')
+    bsp_thirdparty_fatfs_dest_path = os.path.join(bsp_thirdparty_dest_path, 'FatFs') 
     print('copy BSP ThirdParty FatFs ...')
-    shutil.copytree(bsp_thirdparty_fatfs_src_path,
-                    bsp_thirdparty_fatfs_dest_path, dirs_exist_ok=True)
+    shutil.copytree(bsp_thirdparty_fatfs_src_path, bsp_thirdparty_fatfs_dest_path, dirs_exist_ok = True)
 
-    bsp_thirdparty_openmv_src_path = os.path.join(
-        bsp_thirdparty_src_path, 'openmv')
-    bsp_thirdparty_openmv_dest_path = os.path.join(
-        bsp_thirdparty_dest_path, 'openmv')
+    bsp_thirdparty_openmv_src_path = os.path.join(bsp_thirdparty_src_path, 'openmv')
+    bsp_thirdparty_openmv_dest_path = os.path.join(bsp_thirdparty_dest_path, 'openmv')
     print('copy BSP ThirdParty openmv ...')
-    shutil.copytree(bsp_thirdparty_openmv_src_path,
-                    bsp_thirdparty_openmv_dest_path, dirs_exist_ok=True)
+    shutil.copytree(bsp_thirdparty_openmv_src_path, bsp_thirdparty_openmv_dest_path, dirs_exist_ok = True)
 
-    bsp_thirdparty_ml_evk_src_path = os.path.join(
-        bsp_thirdparty_src_path, 'ml-embedded-evaluation-kit')
-    bsp_thirdparty_ml_evk_dest_path = os.path.join(
-        bsp_thirdparty_dest_path, 'ml-embedded-evaluation-kit')
+    bsp_thirdparty_ml_evk_src_path = os.path.join(bsp_thirdparty_src_path, 'ml-embedded-evaluation-kit')
+    bsp_thirdparty_ml_evk_dest_path = os.path.join(bsp_thirdparty_dest_path, 'ml-embedded-evaluation-kit')
     print('copy BSP ThirdParty ml-embedded-evaluation-kit ...')
-    shutil.copytree(bsp_thirdparty_ml_evk_src_path,
-                    bsp_thirdparty_ml_evk_dest_path, dirs_exist_ok=True)
+    shutil.copytree(bsp_thirdparty_ml_evk_src_path, bsp_thirdparty_ml_evk_dest_path, dirs_exist_ok = True)
     # copy .cc to .cpp
-    ml_evk_source_dir = os.path.join(
-        bsp_thirdparty_ml_evk_dest_path, 'source', 'application', 'api', 'common', 'source')
+    ml_evk_source_dir = os.path.join(bsp_thirdparty_ml_evk_dest_path, 'source', 'application', 'api', 'common', 'source')
 
     # Loop through all files in the directory
     for filename in os.listdir(ml_evk_source_dir):
         if filename.endswith('.cc'):
             # Construct full file path
             old_file = os.path.join(ml_evk_source_dir, filename)
-            new_file = os.path.join(
-                ml_evk_source_dir, filename.replace('.cc', '.cpp'))
+            new_file = os.path.join(ml_evk_source_dir, filename.replace('.cc', '.cpp'))
 
             # copy the file
             shutil.copyfile(old_file, new_file)
             print(f'copy {old_file} to {new_file}')
 
-    ml_evk_source_dir = os.path.join(
-        bsp_thirdparty_ml_evk_dest_path, 'source', 'math')
+    ml_evk_source_dir = os.path.join(bsp_thirdparty_ml_evk_dest_path, 'source', 'math')
 
     # Loop through all files in the directory
     for filename in os.listdir(ml_evk_source_dir):
         if filename.endswith('.cc'):
             # Construct full file path
             old_file = os.path.join(ml_evk_source_dir, filename)
-            new_file = os.path.join(
-                ml_evk_source_dir, filename.replace('.cc', '.cpp'))
+            new_file = os.path.join(ml_evk_source_dir, filename.replace('.cc', '.cpp'))
 
             # copy the file
             shutil.copyfile(old_file, new_file)
             print(f'copy {old_file} to {new_file}')
 
-    ml_evk_source_dir = os.path.join(
-        bsp_thirdparty_ml_evk_dest_path, 'source', 'profiler')
+
+    ml_evk_source_dir = os.path.join(bsp_thirdparty_ml_evk_dest_path, 'source', 'profiler')
 
     # Loop through all files in the directory
     for filename in os.listdir(ml_evk_source_dir):
         if filename.endswith('.cc'):
             # Construct full file path
             old_file = os.path.join(ml_evk_source_dir, filename)
-            new_file = os.path.join(
-                ml_evk_source_dir, filename.replace('.cc', '.cpp'))
+            new_file = os.path.join(ml_evk_source_dir, filename.replace('.cc', '.cpp'))
 
             # copy the file
             shutil.copyfile(old_file, new_file)
             print(f'copy {old_file} to {new_file}')
 
-    bsp_patch_src_path = os.path.join(
-        templates_path, board_info[1], 'BSP_patch')
+
+    bsp_patch_src_path = os.path.join(templates_path, board_info[1], 'BSP_patch')
     bsp_dest_path = os.path.join(project_path, board_info[2])
     if os.path.exists(bsp_patch_src_path):
         print('copy bsp library patch to autogen project directory')
-        shutil.copytree(bsp_patch_src_path, bsp_dest_path, dirs_exist_ok=True)
+        shutil.copytree(bsp_patch_src_path, bsp_dest_path, dirs_exist_ok = True)
 
-    example_template_path = os.path.join(
-        templates_path, board_info[1], board_info[0], 'example_template')
-    example_project_path = os.path.join(
-        bsp_dest_path, 'SampleCode', 'MachineLearning')
+    example_template_path = os.path.join(templates_path, board_info[1], board_info[0], example_tmpl_dir)
+    example_project_path = os.path.join(bsp_dest_path, 'SampleCode', 'MachineLearning')
+    example_project_src_path = os.path.join(example_template_path, example_tmpl_proj)
 
     print(example_template_path)
+    print(example_project_src_path)
     print(example_project_path)
 
     print('copy example template project to autogen MachineLearning example folder')
-    shutil.copytree(example_template_path,
-                    example_project_path, dirs_exist_ok=True)
+    example_project_path = os.path.join(example_project_path, example_tmpl_proj)
+    shutil.copytree(example_project_src_path, example_project_path, dirs_exist_ok = True)
     
-    example_project_path = os.path.join(
-        example_project_path, 'NN_ModelInference')
-    example_project_model_cpp_file = os.path.join(
-        example_project_path, 'Model', 'NN_Model_INT8.tflite.cpp')
+    example_project_model_cpp_file = os.path.join(example_project_path, 'Model', 'NN_Model_INT8.tflite.cpp')
     example_project_model_dir = os.path.join(example_project_path, 'Model')
     shutil.copyfile(vela_model_cc_file, example_project_model_cpp_file)
     shutil.copy(vela_model_file, example_project_model_dir)
 
     print('copy link script')
-    link_script_keil_src_file = os.path.join(
-        templates_path, board_info[1], board_info[0], 'link_script', 'armcc', 'armcc.scatter')
-    link_script_keil_dest_file = os.path.join(
-        example_project_path, 'KEIL', 'armcc.scatter')
+    link_script_keil_src_file = os.path.join(templates_path, board_info[1], board_info[0], example_tmpl_dir, 'link_script', 'armcc', 'armcc.scatter')
+    link_script_keil_dest_file = os.path.join(example_project_path, 'KEIL', 'armcc.scatter')
     shutil.copyfile(link_script_keil_src_file, link_script_keil_dest_file)
 
-    link_script_gcc_src_file = os.path.join(
-        templates_path, board_info[1], board_info[0], 'link_script', 'gcc', 'gcc.ld')
-    link_script_gcc_dest_file = os.path.join(
-        example_project_path, 'GCC', 'gcc.ld')
+    link_script_gcc_src_file = os.path.join(templates_path, board_info[1], board_info[0], example_tmpl_dir, 'link_script', 'gcc', 'gcc.ld')
+    link_script_gcc_dest_file = os.path.join(example_project_path, 'GCC', 'gcc.ld')
     shutil.copyfile(link_script_gcc_src_file, link_script_gcc_dest_file)
 
     print('copy progen records to autogen project directory')
-    progen_src_path = os.path.join(
-        templates_path, board_info[1], board_info[0], 'progen')
+    progen_src_path = os.path.join(templates_path, board_info[1], board_info[0], example_tmpl_dir, 'progen')
     progen_dest_path = os.path.join(example_project_path, '..')
 
-    shutil.copytree(os.path.join(progen_src_path, 'tools'), os.path.join(
-        progen_dest_path, 'tools'), dirs_exist_ok=True)
-    shutil.copyfile(os.path.join(progen_src_path, 'project.yaml'),
-                    os.path.join(progen_dest_path, 'project.yaml'))
+    shutil.copytree(os.path.join(progen_src_path, 'tools'), os.path.join(progen_dest_path, 'tools'), dirs_exist_ok = True)
+    shutil.copyfile(os.path.join(progen_src_path, 'project.yaml'), os.path.join(progen_dest_path, 'project.yaml'))
     
     # vscode setting
     vscode_set_path = os.path.join(templates_path, board_info[1], board_info[0], 'vscode_set')
@@ -307,7 +286,7 @@ def remove_read_only(folder_path):
     os.chmod(folder_path, stat.S_IWRITE)
 
 
-def prepare_vscode_sds_proj_resource(board_info, project_path, templates_path, vela_model_file, vela_model_cc_file):
+def prepare_vscode_sds_proj_resource(board_info, project_path, templates_path, vela_model_file, vela_model_cc_file, example_tmpl_dir, example_tmpl_proj):
     print('copy resources to autogen project directory')
 
     bsp_lib_src_path = os.path.join(templates_path, board_info[2], 'Library')
@@ -361,9 +340,9 @@ def prepare_vscode_sds_proj_resource(board_info, project_path, templates_path, v
 
     # copy whole sds vscode project from downloaded SDS BSP
     example_template_path = os.path.join(
-        templates_path, sds_list[0], 'M55M1BSP-3.01.001', 'SampleCode', 'SDS', 'NN_ModelInference_SDS')
+        templates_path, sds_list[0], 'M55M1BSP-3.01.001', 'SampleCode', example_tmpl_dir, example_tmpl_proj)
     example_project_path = os.path.join(
-        bsp_dest_path, 'SampleCode', 'MachineLearning', 'NN_ModelInference_SDS')
+        bsp_dest_path, 'SampleCode', 'MachineLearning', example_tmpl_proj)
     if os.path.exists(example_project_path):  # remove read only attribute
         remove_read_only(example_project_path)
     else:
@@ -409,7 +388,7 @@ def prepare_vscode_sds_proj_resource(board_info, project_path, templates_path, v
 
     # copy the new model
     example_project_path = os.path.join(
-        bsp_dest_path, 'SampleCode', 'MachineLearning', 'NN_ModelInference_SDS')
+        bsp_dest_path, 'SampleCode', 'MachineLearning', example_tmpl_proj)
     example_project_model_cpp_file = os.path.join(
         example_project_path, 'Model', 'NN_Model_INT8.tflite.cpp')
     example_project_model_dir = os.path.join(example_project_path, 'Model')
@@ -436,16 +415,12 @@ def proj_gen(progen_path, project_type, project_dir_name):
     #For embeded python
     if python_dir.count('NuML_embedded'): # the python executable is in the project which means it's embedded python
         embedded_py_path = os.path.join(python_dir, 'runtime', 'python.exe')
-        subprocess.run([embedded_py_path, '-m', 'project_generator', 'generate', 
-                        '-f', 'project.yaml', '-p', 'NN_ModelInference'])
+        subprocess.run([embedded_py_path, '-m', 'project_generator', 'generate', '-f', 'project.yaml', '-p', project_dir_name, '-t', project_type])
 
     else:
-        progen_cmd = ['progen', 'generate', '-f',
-                      'project.yaml', '-p', 'NN_ModelInference']
+        progen_cmd = ['progen', 'generate', '-f', 'project.yaml', '-p', project_dir_name]
         progen_cmd.append('-t')
         progen_cmd.append(project_type)
-
-        print(progen_cmd)
         ret = subprocess.run(progen_cmd)
         if ret.returncode == 0:
             print('Success generation')
@@ -454,8 +429,7 @@ def proj_gen(progen_path, project_type, project_dir_name):
 
     # copy project file to project folder
     toolchain_project = project_type + '_' + project_dir_name
-    toolchain_project_src_dir = os.path.join(
-        'generated_projects', toolchain_project)
+    toolchain_project_src_dir = os.path.join('generated_projects', toolchain_project)
 
     if project_type == 'uvision5_armc6':
         toolchain_project_dest_dir = os.path.join(project_dir_name, 'KEIL')
@@ -465,8 +439,7 @@ def proj_gen(progen_path, project_type, project_dir_name):
     print(toolchain_project_src_dir)
     print(toolchain_project_dest_dir)
 
-    shutil.copytree(toolchain_project_src_dir,
-                    toolchain_project_dest_dir, dirs_exist_ok=True)
+    shutil.copytree(toolchain_project_src_dir, toolchain_project_dest_dir, dirs_exist_ok = True)
 
     # delete progen files
     shutil.rmtree('generated_projects')
@@ -479,6 +452,13 @@ def proj_gen(progen_path, project_type, project_dir_name):
 def project_generate(args):
     print(f"project type is {args.project_type}")
     templates_path = args.templates_path
+    application_usage = args.application
+
+    if not application_usage in application:
+        print("applicaiton not found! using generic instead")
+        application_usage = "generic"
+
+    application_param = application[application_usage]
 
     if templates_path == None:
         templates_path = os.path.join(os.path.dirname(__file__), 'templates')
@@ -492,10 +472,10 @@ def project_generate(args):
             break
 
     # download SDS BSP
-    if args.vs_ex_type == 'sds_gsensor':
+    if args.project_type == 'vscode':
         download_sds_bsp(templates_path)
 
-    if board_found == False:
+    if board_found is False:
         print("board not support")
         return 'unable_generate'
 
@@ -508,143 +488,60 @@ def project_generate(args):
         os.mkdir(args.output_path)
 
     # generated project directory
-    project_path = os.path.join(
-        args.output_path, PROJECT_GEN_DIR_PREFIX + args.board)
+    project_path = os.path.join(args.output_path, PROJECT_GEN_DIR_PREFIX + args.board)
     if not os.path.exists(project_path):
         os.mkdir(project_path)
 
     # model compile by vela
+    arena_size = args.model_arena_size
     vela_dir_path = os.path.join(os.path.dirname(__file__), '..', 'vela')
 
-    """ temp del for testing
-    """
-    ret = model_compile(board_info, args.output_path,
-                        vela_dir_path, os.path.abspath(args.model_file))
+    ret = model_compile(board_info, args.output_path, vela_dir_path, os.path.abspath(args.model_file), arena_size)
     if ret == False:
         return 'unable_generate'
 
-    vela_model_basename = os.path.splitext(
-        os.path.basename(args.model_file))[0]
-    vela_model_file = os.path.join(
-        args.output_path, vela_model_basename + '_vela.tflite')
-    vela_summary_file = os.path.join(
-        args.output_path, vela_model_basename + '_summary_Ethos_U55_High_End_Embedded.csv')
-    print(vela_model_file)
+    vela_model_basename = os.path.splitext(os.path.basename(args.model_file))[0]
+    vela_model_file_path = os.path.join(args.output_path, vela_model_basename + '_vela.tflite')
+    vela_summary_file_path = os.path.join(args.output_path, vela_model_basename + '_summary_Ethos_U55_High_End_Embedded.csv')
+    print(vela_model_file_path)
 
     # generate model cc file
-    tflite2cpp_dir_path = os.path.join(
-        os.path.dirname(__file__), '..', 'tflite2cpp')
+    tflite2cpp_dir_path = os.path.join(os.path.dirname(__file__), '..', 'tflite2cpp')
     print(tflite2cpp_dir_path)
-    generate_model_cpp(args.output_path, tflite2cpp_dir_path,
-                       os.path.abspath(vela_model_file))
-    vela_model_cc_file = os.path.join(
-        args.output_path, vela_model_basename + '_vela.tflite.cc')
+    generate_model_cpp(args.output_path, tflite2cpp_dir_path, os.path.abspath(vela_model_file_path)) 
+    vela_model_cc_file = os.path.join(args.output_path, vela_model_basename + '_vela.tflite.cc')
     print(vela_model_cc_file)
 
     # prepare project resource
-    if args.vs_ex_type == 'sds_gsensor':
-        project_example_path = prepare_vscode_sds_proj_resource(
-            board_info, project_path, templates_path, vela_model_file, vela_model_cc_file)
+    example_tmpl_dir = application_param["example_tmpl_dir"]
+    example_tmpl_proj = application_param["example_tmpl_proj"]
+    if application_usage == 'gsensor_sds':
+        project_example_path = prepare_vscode_sds_proj_resource(board_info, project_path, templates_path, vela_model_file_path, vela_model_cc_file, example_tmpl_dir, example_tmpl_proj)
     else:
-        project_example_path = prepare_proj_resource(
-            board_info, project_path, templates_path, vela_model_file, vela_model_cc_file)
+        project_example_path = prepare_proj_resource(board_info, project_path, templates_path, vela_model_file_path, vela_model_cc_file, example_tmpl_dir, example_tmpl_proj)
     print(project_example_path)
 
-    # Generate NNModel.hpp file
-    NNModel_hpp_file_path = os.path.join(
-        project_example_path, 'Model', 'include', 'NNModel.hpp')
-    NNModel_hpp_temp_file_path = os.path.join(
-        templates_path, 'NNModel.hpp.template')
-    print(f'NNModel.hpp template path {NNModel_hpp_temp_file_path}')
-    print(f'NNModel.hpp file path {NNModel_hpp_file_path}')
+    # Generate mode.hpp/cpp or main.cpp
+    if application_usage == 'generic':
+        codegen = GenericCodegen.from_args(vela_model_file_path, project_example_path, vela_summary_file_path, app='generic')
+    elif application_usage == 'imgclass':
+        codegen = ImgClassCodegen.from_args(vela_model_file_path, project_example_path, vela_summary_file_path, app='imagclass')
+    elif application_usage == 'gsensor_sds':
+        codegen = SdsGsensorCodegen.from_args(vela_model_file_path, project_example_path, vela_summary_file_path, app='gsensor_sds')
+    
+    codegen.code_gen()
 
-    try:
-        NNModel_hpp_temp_file = open(
-            NNModel_hpp_temp_file_path, "r", encoding="utf-8")
-    except OSError:
-        print("Could not open NNModel.hpp template file")
-        return 'unable_generate'
-
-    try:
-        NNModel_hpp_file = open(NNModel_hpp_file_path, "w", encoding="utf-8")
-    except OSError:
-        print("Could not open NNModel.hpp file")
-        return 'unable_generate'
-
-    with NNModel_hpp_file:
-        NNModel_hpp_codegen = NNModelHppCodegen()
-        NNModel_hpp_codegen.code_gen(
-            NNModel_hpp_file, NNModel_hpp_temp_file, vela_model_file)
-
-    NNModel_hpp_temp_file.close()
-
-    # Generate NNModel.cpp file
-    NNModel_cpp_file_path = os.path.join(
-        project_example_path, 'Model', 'NNModel.cpp')
-    NNModel_cpp_temp_file_path = os.path.join(
-        templates_path, 'NNModel.cpp.template')
-    print(f'NNModel.cpp template path {NNModel_cpp_temp_file_path}')
-    print(f'NNModel.cpp file path {NNModel_cpp_file_path}')
-
-    try:
-        NNModel_cpp_temp_file = open(
-            NNModel_cpp_temp_file_path, "r", encoding="utf-8")
-    except OSError:
-        print("Could not open NNModel.cpp template file")
-        return 'unable_generate'
-
-    try:
-        NNModel_cpp_file = open(NNModel_cpp_file_path, "w", encoding="utf-8")
-    except OSError:
-        print("Could not open NNModel.cpp file")
-        return 'unable_generate'
-
-    with NNModel_cpp_file:
-        NNModel_cpp_codegen = NNModelCppCodegen()
-        NNModel_cpp_codegen.code_gen(
-            NNModel_cpp_file, NNModel_cpp_temp_file, vela_model_file)
-
-    NNModel_cpp_temp_file.close()
-
-    # Generate main.cpp file
-    main_file_path = os.path.join(project_example_path, 'main.cpp')
-    if args.vs_ex_type == 'sds_gsensor':
-        main_temp_file_path = os.path.join(templates_path, 'main_sds_mpu6500_ex.cpp.template')
-    else:
-        main_temp_file_path = os.path.join(templates_path, 'main.cpp.template')
-    print(f'template path: {main_temp_file_path}')
-    print(f'main file path: {main_file_path}')
-
-    try:
-        main_temp_file = open(main_temp_file_path, "r", encoding="utf-8")
-    except OSError:
-        print("Could not open main template file")
-        return 'unable_generate'
-
-    try:
-        main_file = open(main_file_path, "w", encoding="utf-8")
-    except OSError:
-        print("Could not open main file")
-        return 'unable_generate'
-
-    with main_file:
-        if args.vs_ex_type == 'sds_gsensor':
-            main_codegen = MainSDSCCodegen()
-        else:
-            main_codegen = MainCCodegen()
-        main_codegen.code_gen(main_file, main_temp_file, vela_summary_file)
-
-    main_temp_file.close()
-    os.remove(vela_model_file)
+    os.remove(vela_model_file_path)
     os.remove(vela_model_cc_file)
 
-    if args.project_type == 'vscode' and args.vs_ex_type == 'sds_gsensor':  # vscode project is already generated from copying SDS BSP
+
+    if application_usage == 'gsensor_sds':  # sds project is already generated from copying SDS BSP
         print(
-            f'NN_ModelInference example project completed at {os.path.abspath(project_example_path)}')
+            f'Example project completed at {os.path.abspath(project_example_path)}')
     else:  # start generate project file (*.uvprojx, Makefile)
         progen_path = os.path.join(project_example_path, '..')
-        proj_gen(progen_path, args.project_type,
-                 os.path.basename(project_example_path))
-        print(
-            f'NN_ModelInference example project completed at {os.path.abspath(project_example_path)}')
+        proj_gen(progen_path, args.project_type, os.path.basename(project_example_path))
+        print(f'Example project completed at {os.path.abspath(project_example_path)}')
+
     return project_example_path
+    
