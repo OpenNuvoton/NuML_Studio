@@ -548,8 +548,7 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
                 binary_file = fw_list_item[1]
 
                 # update baudrate to textEdit
-                self.lineEdit_2.setPlainText(str(fw_list_item[2]))
-                self.lineEdit_2.ensureCursorVisible()
+                self.lineEdit_2.setText(str(fw_list_item[2]))
 
                 break
         binary_file = os.path.join('app', 'mcu_firmware', board, binary_file)
@@ -577,8 +576,8 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         Executes the SDSIO server with the specified configuration parameters.
         """
         server_type = self.comboBox_serverType_2.currentText()
-        serial_port = self.lineEdit.toPlainText()
-        baudrate = self.lineEdit_2.toPlainText()
+        serial_port = self.lineEdit.text()
+        baudrate = self.lineEdit_2.text()
         out_dir = self.textEdit_outputDir_2.toPlainText()
         if not server_type or not serial_port or not baudrate or not out_dir:
             print("Error: Missing server configuration parameters.")
@@ -643,7 +642,7 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         sds_file = self.textEdit_10_sdsF_2.toPlainText()
         out_file = self.textEdit_8_outDir_2.toPlainText()
         yaml_file = self.textEdit_9_yamlF_2.toPlainText()
-        label = self.lineEdit_3.toPlainText()
+        label = self.lineEdit_3.text()
 
         if not convert_format or not sds_file or not out_file or not yaml_file:
             print("Error: Missing convert configuration parameters.")
@@ -739,7 +738,7 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         out_proj_path = self.textEdit_8.toPlainText()
         proj_type = self.comboBox_5.currentText()
         app_type = self.comboBox_6.currentText()
-        arena_size = self.lineEdit_5.toPlainText()
+        arena_size = self.lineEdit_5.text()
         if not numl_type or not tflite_model or not out_proj_path:
             print("Error: Missing NuML_TFLM_Tool configuration parameters.")
             return
@@ -776,7 +775,7 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         board = self.comboBox_12.currentText()
         out_proj_path = self.textEdit_13.toPlainText()
         app_type = self.comboBox_14.currentText()
-        test_data_label = self.lineEdit_6.toPlainText()
+        test_data_label = self.lineEdit_6.text()
         if not eisdk_path or not out_proj_path:
             print("Error: Missing Edge Impulse SDK dir path or output path.")
             return
@@ -819,7 +818,7 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         """
         folderpath = self.textEdit_10_sdsF_3.toPlainText()
         category = self.comboBox_serverType_convertFormat_3.currentText()
-        label = self.lineEdit_4.toPlainText()
+        label = self.lineEdit_4.text()
 
         ei_upload = EiUploadDir()
         if label == 'None':
