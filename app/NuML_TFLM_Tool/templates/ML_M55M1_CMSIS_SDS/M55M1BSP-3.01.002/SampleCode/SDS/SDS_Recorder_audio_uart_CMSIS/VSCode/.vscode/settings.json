@@ -1,0 +1,23 @@
+{
+    "cmsis-csolution.actions": [
+        {
+            "path": "SDS_Recorder_audio_uart_CMSIS.csolution.yml",
+            "target": "ARMCLANG",
+            "config": {
+                "run": "Flash Device",
+                "debug": "Embedded Debug"
+            }
+        },
+        {
+            "path": "SDS_Recorder_audio_uart_CMSIS.csolution.yml",
+            "target": "GNUC",
+            "config": {
+                "run": "Flash Device",
+                "debug": "Embedded Debug"
+            }
+        }
+    ],
+    "clangd.arguments": [
+        "--compile-commands-dir=c:\\CYCHEN38\\OpenNuvoton\\firmware\\M55M1_dev\\SampleCode\\SDS\\SDS_Recorder_uart_CMSIS\\VSCode\\out\\SDS_Recorder_uart_CMSIS\\ARMCLANG\\Release"
+    ]
+}

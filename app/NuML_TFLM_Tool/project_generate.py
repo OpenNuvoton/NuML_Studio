@@ -25,8 +25,10 @@ board_list = [
     ['NuMaker-M55M1', 'M55M1', 'M55M1BSP', 'https://github.com/OpenNuvoton/M55M1BSP.git'],
 ]
 
-sds_list = ['M55M1_SDS_inference_example',
-            "https://github.com/MaxCYCHEN/M55M1_SDS_inference_example.git"]
+sds_list = ['ML_M55M1_CMSIS_SDS',
+            "https://github.com/MaxCYCHEN/ML_M55M1_CMSIS_SDS.git",
+            "M55M1BSP-3.01.002" # This is the used BSP version, it also the dir name in the SDS git repo
+]
 
 project_type_list = ['uvision5_armc6', 'make_gcc_arm', 'vscode']
 
@@ -275,7 +277,11 @@ def prepare_proj_resource(board_info, project_path, templates_path, vela_model_f
 
 
 def remove_read_only(folder_path):
+    dirs_to_skip = ["tmp", "out"]
     for root, dirs, files in os.walk(folder_path):
+        # Remove directories to skip from the dirs list
+        dirs[:] = [dir_name for dir_name in dirs if dir_name not in dirs_to_skip]
+
         for dir_name in dirs:
             dir_path = os.path.join(root, dir_name)
             os.chmod(dir_path, stat.S_IWRITE)
@@ -284,7 +290,6 @@ def remove_read_only(folder_path):
             os.chmod(file_path, stat.S_IWRITE)
     # Remove read-only from the folder itself
     os.chmod(folder_path, stat.S_IWRITE)
-
 
 def prepare_vscode_sds_proj_resource(board_info, project_path, templates_path, vela_model_file, vela_model_cc_file, example_tmpl_dir, example_tmpl_proj):
     print('copy resources to autogen project directory')
@@ -340,7 +345,7 @@ def prepare_vscode_sds_proj_resource(board_info, project_path, templates_path, v
 
     # copy whole sds vscode project from downloaded SDS BSP
     example_template_path = os.path.join(
-        templates_path, sds_list[0], 'M55M1BSP-3.01.001', 'SampleCode', example_tmpl_dir, example_tmpl_proj)
+        templates_path, sds_list[0], sds_list[2], 'SampleCode', example_tmpl_dir, example_tmpl_proj)
     example_project_path = os.path.join(
         bsp_dest_path, 'SampleCode', 'MachineLearning', example_tmpl_proj)
     if os.path.exists(example_project_path):  # remove read only attribute
@@ -366,7 +371,7 @@ def prepare_vscode_sds_proj_resource(board_info, project_path, templates_path, v
 
     # copy Library\SDS-Framework of sds vscode project from downloaded SDS BSP
     example_template_path = os.path.join(
-        templates_path, sds_list[0], 'M55M1BSP-3.01.001', 'Library', 'SDS-Framework')
+        templates_path, sds_list[0], sds_list[2], 'Library', 'SDS-Framework')
     example_project_path = os.path.join(
         bsp_dest_path, 'Library', 'SDS-Framework')
     print(example_template_path)
@@ -377,7 +382,7 @@ def prepare_vscode_sds_proj_resource(board_info, project_path, templates_path, v
 
     # copy ThirdParty\MPU6500 of sds vscode project from downloaded SDS BSP
     example_template_path = os.path.join(
-        templates_path, sds_list[0], 'M55M1BSP-3.01.001', 'ThirdParty', 'MPU6500')
+        templates_path, sds_list[0], sds_list[2], 'ThirdParty', 'MPU6500')
     example_project_path = os.path.join(
         bsp_thirdparty_dest_path, 'MPU6500')
     print(example_template_path)
@@ -470,10 +475,6 @@ def project_generate(args):
             board_found = True
             download_bsp(board_info, templates_path)
             break
-
-    # download SDS BSP
-    if args.project_type == 'vscode':
-        download_sds_bsp(templates_path)
 
     if board_found is False:
         print("board not support")

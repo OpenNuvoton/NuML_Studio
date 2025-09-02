@@ -8,6 +8,14 @@ msg = 'Hello from %s'%(os.path.abspath(__file__))
 print(msg)
 print()
 
+CA_FILE_PATH = r'..\Websense Public Primary Certificate Authority.crt'
+if os.path.exists(CA_FILE_PATH):
+    os.environ['REQUESTS_CA_BUNDLE'] = CA_FILE_PATH
+    print(f"Adding CA from {CA_FILE_PATH}\n")
+    #print(os.environ['REQUESTS_CA_BUNDLE'])
+    #print(requests.certs.where())
+    #response = requests.post("https://httpbin.org/post", data={"key": "value"})
+
 for path in sys.path:
     print('>', path)
 
@@ -37,9 +45,19 @@ if __name__ == "__main__":
     #'--board', 'NuMaker-M55M1', '--output_path', 'C:\gen_proj_5', 
     #'--project_type', 'vscode', '--application', 'imgclass', '--model_arena_size', '39000'])
 
-    start(['generate', '--model_file', 'models/ei-g-sensor-test2-classifier-tensorflow-lite-int8-quantized-model.3.tflite', 
-    '--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_6', 
-    '--project_type', 'vscode', '--application', 'gsensor_sds', '--model_arena_size', '10000'])
+    #start(['generate', '--model_file', 'models/ei-g-sensor-test2-classifier-tensorflow-lite-int8-quantized-model.3.tflite', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_6', 
+    #'--project_type', 'vscode', '--application', 'gsensor_sds', '--model_arena_size', '10000'])
+
+    #start(['generate', '--model_file', 'models/vww_mobilenetv3_1.0_96_96_int8quant_min.tflite', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_2', 
+    #'--project_type', 'uvision5_armc6', '--application', 'generic'])
+
+    #start(['generate_ei', '--ei_sdk_path', 'C:/Users/cychen38/Downloads/g-sensor-test2-ethos-u55-256-v11', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_ei', '--application', 'generic', '--specify_label', 'O'])
+
+    start(['generate_ei', '--ei_sdk_path', 'C:/Users/cychen38/Downloads/g-sensor-test2-ethos-u55-256-v11', 
+    '--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_ei_2', '--application', 'generic'])
 
 
     
