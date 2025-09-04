@@ -418,19 +418,18 @@ def proj_gen(progen_path, project_type, project_dir_name):
 
     python_dir = os.path.dirname(sys.executable)
     #For embeded python
-    if python_dir.count('NuML_embedded'): # the python executable is in the project which means it's embedded python
-        embedded_py_path = os.path.join(python_dir, 'runtime', 'python.exe')
-        subprocess.run([embedded_py_path, '-m', 'project_generator', 'generate', '-f', 'project.yaml', '-p', project_dir_name, '-t', project_type])
+    embedded_py_path = os.path.join(python_dir, 'runtime', 'python.exe')
+    subprocess.run([embedded_py_path, '-m', 'project_generator', 'generate', '-f', 'project.yaml', '-p', project_dir_name, '-t', project_type])
 
-    else:
-        progen_cmd = ['progen', 'generate', '-f', 'project.yaml', '-p', project_dir_name]
-        progen_cmd.append('-t')
-        progen_cmd.append(project_type)
-        ret = subprocess.run(progen_cmd)
-        if ret.returncode == 0:
-            print('Success generation')
-        else:
-            print('Unable generation')
+    # Original python environment
+    #progen_cmd = ['progen', 'generate', '-f', 'project.yaml', '-p', project_dir_name]
+    #progen_cmd.append('-t')
+    #progen_cmd.append(project_type)
+    #ret = subprocess.run(progen_cmd)
+    #if ret.returncode == 0:
+    #    print('Success generation')
+    #else:
+    #    print('Unable generation')
 
     # copy project file to project folder
     toolchain_project = project_type + '_' + project_dir_name

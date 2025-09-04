@@ -158,7 +158,7 @@ static int32_t Accelerometer_Enable(void)
     if (mpu6500_fifo_init(interface, addr) == 0)
     {
         // Clear MPU6500 FIFO
-        mpu6500_interface_delay_ms(10);
+        mpu6500_interface_delay_ms(200);
 
         if (mpu6500_fifo_read(accel_raw_sp, accel_g_sp, gyro_raw_sp, gyro_dps_sp, &len_sample) != 0U)
         {
