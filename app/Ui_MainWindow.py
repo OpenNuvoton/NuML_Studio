@@ -2075,7 +2075,7 @@ class Ui_NuMLTool(object):
 
     def retranslateUi(self, NuMLTool):
         _translate = QtCore.QCoreApplication.translate
-        NuMLTool.setWindowTitle(_translate("NuMLTool", "NuML-Toolkit"))
+        NuMLTool.setWindowTitle(_translate("NuMLTool", "NuML-GUI"))
         self.label.setText(_translate("NuMLTool", "<html><head/><body><p><img src=\":/newPrefix/320px-Nuvoton.png\"/></p></body></html>"))
         self.treeWidget.headerItem().setText(0, _translate("NuMLTool", "1"))
         __sortingEnabled = self.treeWidget.isSortingEnabled()
