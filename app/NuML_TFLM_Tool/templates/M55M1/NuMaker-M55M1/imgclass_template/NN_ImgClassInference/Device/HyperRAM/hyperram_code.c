@@ -260,6 +260,8 @@ void HyperRAM_TrimDLLDelayNumber(SPIM_T *spim)
 
 void HyperRAM_Init(SPIM_T *spim)
 {
+    HRAM_REG_T sHRAMReg;
+
     /* Unlock protected registers */
     SYS_UnlockReg();
 
@@ -283,6 +285,25 @@ void HyperRAM_Init(SPIM_T *spim)
 
     /* Trim DLL component delay stop number */
     HyperRAM_TrimDLLDelayNumber(spim);
+
+    /* Read HyperRAM Configuration Register 0 */
+    sHRAMReg.CONFIG0.u32REG = SPIM_HYPER_ReadHyperRAMReg(spim, SPIM_HYPER_HRAM_CONFIG_REG0);
+
+    /* Set Drive Strength to 34ohms by default (u3DriveStrength = 0) */
+    /* This default setting is based on Infineon S27KS0642 and Winbond W958D8NBYA. */
+    /*
+       If you encounter issues such as signal instability, timing errors, or read/write failures during testing,
+       you may refer to the HyperRAM datasheet and adjust this setting accordingly.
+
+       - u3DriveStrength defines the I/O output driver impedance.
+       - Valid range: 0 ~ 7, each value corresponds to a specific drive strength (e.g., 34ohms, 46ohms, 67ohms... depending on the vendor).
+       - Adjust this value to improve signal integrity based on layout, trace length, and memory vendor.
+    */
+    sHRAMReg.CONFIG0.u3DriveStrength = 0;
+
+    /* Write the updated value back to HyperRAM Configuration Register 0 */
+    SPIM_HYPER_WriteHyperRAMReg(spim, SPIM_HYPER_HRAM_CONFIG_REG0, sHRAMReg.CONFIG0.u32REG);
+
 }
 
 void HyperRAM_PinConfig(SPIM_T *spim)
@@ -296,8 +317,13 @@ void HyperRAM_PinConfig(SPIM_T *spim)
         /* Enable OTFC0 module clock */
         CLK_EnableModuleClock(OTFC0_MODULE);
 
-        uint32_t u32SlewRate = GPIO_SLEWCTL_FAST0;
-
+        /* Set the slew rate of HyperRAM IO pins to FAST1 by default */
+        /* This default setting is based on Infineon S27KS0642 and Winbond W958D8NBYA. */
+        /*
+         * If you encounter issues such as signal instability, timing errors, or read/write failures during testing,
+         * you may refer to the HyperRAM datasheet and adjust this setting accordingly.
+        */
+        uint32_t u32SlewRate = GPIO_SLEWCTL_FAST1;
         /* Init SPIM multi-function pins */
         SET_SPIM0_CLKN_PH12();
         SET_SPIM0_CLK_PH13();
