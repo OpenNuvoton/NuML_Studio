@@ -7,6 +7,7 @@ import time
 import shutil
 import stat
 import fileinput
+from pathlib import Path
 
 import git
 from git import RemoteProgress
@@ -178,6 +179,14 @@ def ei_tesnor_size_update(model_parameters_dir_path, tflite_model_dir_path, mul_
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.writelines(lines)
 
+def add_long_path_prefix(path: str) -> str:
+    # Always normalize to absolute path with backslashes
+    abs_path = os.path.abspath(path)
+    abs_path = abs_path.replace("/", "\\")   # ensure backslashes only
+    if abs_path.startswith("\\\\?\\"):
+        return abs_path
+    return "\\\\?\\" + abs_path
+
 def prepare_ei_proj_resource(board_info, project_path, templates_path, new_ei_sdk_path, example_tmpl_dir, example_tmpl_proj, example_proj_list):
     """
     Prepares the resources for an Edge Impulse (EI) project by copying necessary files and directories 
@@ -188,7 +197,7 @@ def prepare_ei_proj_resource(board_info, project_path, templates_path, new_ei_sd
     bsp_lib_src_path = os.path.join(templates_path, board_info[2], 'Library')
     bsp_lib_dest_path = os.path.join(project_path, board_info[2], 'Library')
     print('copy bsp library to autogen project directory')
-    shutil.copytree(bsp_lib_src_path, bsp_lib_dest_path, dirs_exist_ok = True)
+    shutil.copytree(add_long_path_prefix(bsp_lib_src_path), add_long_path_prefix(bsp_lib_dest_path), dirs_exist_ok = True)
 
     bsp_thirdparty_src_path = os.path.join(templates_path, board_info[2], 'ThirdParty')
     bsp_thirdparty_dest_path = os.path.join(project_path, board_info[2], 'ThirdParty')
@@ -196,24 +205,24 @@ def prepare_ei_proj_resource(board_info, project_path, templates_path, new_ei_sd
     bsp_thirdparty_fatfs_src_path = os.path.join(bsp_thirdparty_src_path, 'FatFs')
     bsp_thirdparty_fatfs_dest_path = os.path.join(bsp_thirdparty_dest_path, 'FatFs') 
     print('copy BSP ThirdParty FatFs ...')
-    shutil.copytree(bsp_thirdparty_fatfs_src_path, bsp_thirdparty_fatfs_dest_path, dirs_exist_ok = True)
+    shutil.copytree(add_long_path_prefix(bsp_thirdparty_fatfs_src_path), add_long_path_prefix(bsp_thirdparty_fatfs_dest_path), dirs_exist_ok = True)
 
     bsp_thirdparty_openmv_src_path = os.path.join(bsp_thirdparty_src_path, 'openmv')
     bsp_thirdparty_openmv_dest_path = os.path.join(bsp_thirdparty_dest_path, 'openmv')
     print('copy BSP ThirdParty openmv ...')
-    shutil.copytree(bsp_thirdparty_openmv_src_path, bsp_thirdparty_openmv_dest_path, dirs_exist_ok = True)
+    shutil.copytree(add_long_path_prefix(bsp_thirdparty_openmv_src_path), add_long_path_prefix(bsp_thirdparty_openmv_dest_path), dirs_exist_ok = True)
 
     bsp_thirdparty_ml_evk_src_path = os.path.join(bsp_thirdparty_src_path, 'ml-embedded-evaluation-kit')
     bsp_thirdparty_ml_evk_dest_path = os.path.join(bsp_thirdparty_dest_path, 'ml-embedded-evaluation-kit')
     print('copy BSP ThirdParty ml-embedded-evaluation-kit ...')
-    shutil.copytree(bsp_thirdparty_ml_evk_src_path, bsp_thirdparty_ml_evk_dest_path, dirs_exist_ok = True)
+    shutil.copytree(add_long_path_prefix(bsp_thirdparty_ml_evk_src_path), add_long_path_prefix(bsp_thirdparty_ml_evk_dest_path), dirs_exist_ok = True)
 
     bsp_patch_src_path = os.path.join(templates_path, board_info[1], 'BSP_patch')
     bsp_dest_path = os.path.join(project_path, board_info[2])
 
     if os.path.exists(bsp_patch_src_path):
         print('copy bsp library patch to autogen project directory')
-        shutil.copytree(bsp_patch_src_path, bsp_dest_path, dirs_exist_ok = True)
+        shutil.copytree(add_long_path_prefix(bsp_patch_src_path), add_long_path_prefix(bsp_dest_path), dirs_exist_ok = True)
 
     # copy whole EI project from ML_SampleCode ei_proj_list
     example_template_path = os.path.join(templates_path, example_proj_list[0], example_proj_list[2], 'SampleCode', example_tmpl_dir, example_tmpl_proj)
@@ -225,7 +234,7 @@ def prepare_ei_proj_resource(board_info, project_path, templates_path, new_ei_sd
     print(f"example_template_path: {example_template_path}")
     print(f"example_project_path: {example_project_path}")
     print('copy example template project to autogen MachineLearning example folder')
-    shutil.copytree(example_template_path, example_project_path, dirs_exist_ok=True)
+    shutil.copytree(add_long_path_prefix(example_template_path), add_long_path_prefix(example_project_path), dirs_exist_ok=True)
 
     # copy .vscode for vscode cmsis project setting
     vscode_set_path = os.path.join(templates_path, board_info[1], board_info[0], 'vscode_set')
@@ -233,15 +242,15 @@ def prepare_ei_proj_resource(board_info, project_path, templates_path, new_ei_sd
     print(f"vscode_set_path: {vscode_set_path}")
     print(f"vscode_set_project_path: {vscode_set_project_path}")
     print('copy .vscode to project folder')
-    shutil.copytree(vscode_set_path, vscode_set_project_path, dirs_exist_ok=True)
+    shutil.copytree(add_long_path_prefix(vscode_set_path), add_long_path_prefix(vscode_set_project_path), dirs_exist_ok=True)
 
     # copy edgeimpulse sdk
-    example_template_path = os.path.join(templates_path, example_proj_list[0], example_proj_list[2], 'ThirdParty', 'edgeimpulse')
-    example_project_path = os.path.join(bsp_dest_path, 'ThirdParty', 'edgeimpulse')
+    example_template_path = Path(templates_path, example_proj_list[0], example_proj_list[2], 'ThirdParty', 'edgeimpulse')
+    example_project_path = Path(bsp_dest_path, 'ThirdParty', 'edgeimpulse')
     print(f"example_template_path: {example_template_path}")
     print(f"example_project_path: {example_project_path}")
     print('copy edgeimpulse sdk...')
-    shutil.copytree(example_template_path, example_project_path, dirs_exist_ok=True)
+    shutil.copytree(add_long_path_prefix(example_template_path), add_long_path_prefix(example_project_path), dirs_exist_ok=True)
 
     # copy the user's new model folders
     example_project_path = os.path.join(bsp_dest_path, 'SampleCode', example_tmpl_dir, example_tmpl_proj)
@@ -260,8 +269,8 @@ def prepare_ei_proj_resource(board_info, project_path, templates_path, new_ei_sd
     except OSError as e:
         print(f"Error rmtree {example_project_edgeimpulse_dir}: {e}")
 
-    shutil.copytree(example_model_parameters_src_dir,  os.path.join(example_project_edgeimpulse_dir, 'model-parameters'), dirs_exist_ok=True)
-    shutil.copytree(example_tflite_model_src_dir, os.path.join(example_project_edgeimpulse_dir, 'tflite-model'), dirs_exist_ok=True)
+    shutil.copytree(add_long_path_prefix(example_model_parameters_src_dir), add_long_path_prefix(os.path.join(example_project_edgeimpulse_dir, 'model-parameters')), dirs_exist_ok=True)
+    shutil.copytree(add_long_path_prefix(example_tflite_model_src_dir), add_long_path_prefix(os.path.join(example_project_edgeimpulse_dir, 'tflite-model')), dirs_exist_ok=True)
 
     # find the name of tflite_learn_compiled model
     compiled_model_filename =None
