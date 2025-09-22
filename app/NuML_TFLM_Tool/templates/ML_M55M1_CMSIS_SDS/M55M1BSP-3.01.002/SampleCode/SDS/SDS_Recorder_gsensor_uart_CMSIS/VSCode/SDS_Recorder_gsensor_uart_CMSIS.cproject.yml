@@ -4,7 +4,7 @@ project:
     - pack: ARM::CMSIS
     - pack: ARM::CMSIS-Driver
     - pack: ARM::CMSIS-RTX
-    - pack: ARM::SDS
+    - pack: ARM::SDS@^1.1.0
     #- pack: ARM::CMSIS-NN@^4.0.0
     #- pack: ARM::CMSIS-DSP@^1.10.1
   components:
@@ -12,7 +12,7 @@ project:
     - component: ARM::CMSIS:OS Tick:SysTick
     - component: ARM::SDS:Buffer
     - component: ARM::SDS:IO:Serial&CMSIS USART
-    - component: ARM::SDS:Recorder
+    - component: ARM::SDS:Recorder&CMSIS-RTOS2
     - component: CMSIS Driver:USART:Custom # CMSIS Driver USART custom implementation
     - component: ARM::CMSIS:CORE
   setups:

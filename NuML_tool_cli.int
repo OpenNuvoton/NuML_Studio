@@ -2,7 +2,7 @@
 import os
 import sys
 import subprocess
-from app.NuML_TFLM_Tool.numl_tool import start 
+from app.NuML_TFLM_Tool.numl_tool import start
 
 msg = 'Hello from %s'%(os.path.abspath(__file__))
 print(msg)
@@ -54,10 +54,22 @@ if __name__ == "__main__":
     #'--project_type', 'uvision5_armc6', '--application', 'generic'])
 
     #start(['generate_ei', '--ei_sdk_path', 'C:/Users/cychen38/Downloads/g-sensor-test2-ethos-u55-256-v11', 
-    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_ei', '--application', 'generic', '--specify_label', 'O'])
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_ei_1', '--application', 'generic', '--specify_label', 'O'])
 
-    start(['generate_ei', '--ei_sdk_path', 'C:/Users/cychen38/Downloads/g-sensor-test2-ethos-u55-256-v11', 
-    '--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_ei_2', '--application', 'generic'])
+    #start(['generate_ei', '--ei_sdk_path', 'C:/Users/cychen38/Downloads/g-sensor-test2-ethos-u55-256-v11', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_ei_2', '--application', 'generic'])
+
+    #start(['generate_ei', '--ei_sdk_path', 'C:/CYCHEN38/MICRO_ML/EdgeImpulse_SDK/image_classification-ethos-u55-256-v3', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_ei_im_1', '--application', 'imgclass'])
+
+    #start(['generate_ei', '--ei_sdk_path', 'C:/CYCHEN38/MICRO_ML/EdgeImpulse_SDK/image_classification-ethos-u55-256-v5', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_ei_im_2', '--application', 'imgclass', '--specify_label', 'person'])
+
+    #start(['generate_ei', '--ei_sdk_path', 'C:/CYCHEN38/MICRO_ML/EdgeImpulse_SDK/kws-ethos-u55-256-v2', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_ei_kws_1', '--application', 'kws'])
+
+    start(['generate_ei', '--ei_sdk_path', 'C:/CYCHEN38/MICRO_ML/EdgeImpulse_SDK/kws-ethos-u55-256-v2', 
+    '--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_ei_kws_2', '--application', 'kws', '--specify_label', 'set_to_orange'])
 
 
     

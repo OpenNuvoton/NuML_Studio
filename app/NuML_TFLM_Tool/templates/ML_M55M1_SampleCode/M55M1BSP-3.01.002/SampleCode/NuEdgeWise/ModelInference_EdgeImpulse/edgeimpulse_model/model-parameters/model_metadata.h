@@ -83,7 +83,7 @@
 #define EI_CLASSIFIER_PROJECT_ID                 672337
 #define EI_CLASSIFIER_PROJECT_OWNER              "Chen Chih Yen"
 #define EI_CLASSIFIER_PROJECT_NAME               "G-sensor-test2"
-#define EI_CLASSIFIER_PROJECT_DEPLOY_VERSION     6
+#define EI_CLASSIFIER_PROJECT_DEPLOY_VERSION     11
 #define EI_CLASSIFIER_NN_INPUT_FRAME_SIZE        600
 #define EI_CLASSIFIER_RAW_SAMPLE_COUNT           200
 #define EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME      3
@@ -109,7 +109,7 @@
 #define EI_CLASSIFIER_TFLITE_INPUT_DATATYPE         EI_CLASSIFIER_DATATYPE_INT8
 #define EI_CLASSIFIER_TFLITE_OUTPUT_DATATYPE        EI_CLASSIFIER_DATATYPE_INT8
 
-#define EI_CLASSIFIER_TFLITE_LARGEST_ARENA_SIZE  18256
+#define EI_CLASSIFIER_TFLITE_LARGEST_ARENA_SIZE  15256
 
 #define EI_CLASSIFIER_INFERENCING_ENGINE            EI_CLASSIFIER_TFLITE
 #define EI_CLASSIFIER_COMPILED                      0
@@ -147,7 +147,7 @@
 
 #define EI_STUDIO_VERSION_MAJOR             1
 #define EI_STUDIO_VERSION_MINOR             74
-#define EI_STUDIO_VERSION_PATCH             1
+#define EI_STUDIO_VERSION_PATCH             12
 
 #define EI_CLASSIFIER_HR_ENABLED            0
 
@@ -162,12 +162,12 @@
 #define EI_CLASSIFIER_HAS_TFLITE_OPS_RESOLVER     0
 
 #if EI_CLASSIFIER_COMPILED == 1
-#error "Cannot use full TensorFlow Lite with EON"
+#error "You cannot use models created with the EON Compiler with full TensorFlow Lite / LiteRT (you're building with EI_CLASSIFIER_USE_FULL_TFLITE=1). In the Studio, under Deployment choose 'C++ library (Linux)' as your deployment option, or set 'TensorFlow Lite' as your inference engine, to get a library that's compatible. Alternatively, build with EI_CLASSIFIER_USE_FULL_TFLITE=0 (this will be much slower)."
 #endif
 #endif // ((EI_CLASSIFIER_INFERENCING_ENGINE == EI_CLASSIFIER_TFLITE) || (EI_CLASSIFIER_INFERENCING_ENGINE == EI_CLASSIFIER_DRPAI)) && EI_CLASSIFIER_USE_FULL_TFLITE == 1
 
 #if (EI_CLASSIFIER_INFERENCING_ENGINE == EI_CLASSIFIER_TFLITE) && (EI_CLASSIFIER_COMPILED != 1) && (EI_CLASSIFIER_TFLITE_LARGEST_ARENA_SIZE == 0)
-#error "Cannot use TensorFlow Micro with this model. Try full TensorFlow Lite (EI_CLASSIFIER_USE_FULL_TFLITE = 1)"
+#error "This model cannot run under TensorFlow Lite Micro (EI_CLASSIFIER_TFLITE_LARGEST_ARENA_SIZE is 0). See https://github.com/edgeimpulse/example-standalone-inferencing-linux (build with EI_CLASSIFIER_USE_FULL_TFLITE=1) to use full TensorFlow Lite / LiteRT."
 #endif
 
 typedef struct {

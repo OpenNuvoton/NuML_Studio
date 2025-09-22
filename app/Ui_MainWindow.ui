@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>NuML-GUI</string>
+   <string>NuML_Studio</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_18" stretch="1,4">
@@ -191,7 +191,7 @@ border-radius: 0px;</string>
           </item>
           <item>
            <property name="text">
-            <string>- EI</string>
+            <string>- Edge Impulse</string>
            </property>
            <property name="font">
             <font>
@@ -2960,7 +2960,7 @@ border-radius: 10px;</string>
                        <number>1</number>
                       </property>
                       <property name="text">
-                       <string>Download EI SDK Path</string>
+                       <string>Download Edge Impulse SDK Path</string>
                       </property>
                       <property name="wordWrap">
                        <bool>true</bool>

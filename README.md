@@ -1,10 +1,10 @@
-NuML-GUI
+NuML_Studio
 ===
 ### This is the UI tool of TFLM ML model project generate and real time data collection tool for Nuvoton ML MCU. It can be executed on Windows without the need to install Python or any related libraries.
 
 ## How this works
 - Download from newest [release](https://github.com/MaxCYCHEN/NuML_embedded/releases) or build yourself.
-- Double-click `NuML-GUI.exe` to launch the tool.
+- Double-click `NuML_Studio.exe` to launch the tool.
     - If you want to upload to Edge Impulse or download single test data to deployment, please update your project API key in `API_key.txt`.
 
 - Other `*.exe` files are command-line programs. Please refer to the examples in `cmd.txt` or use the `-h` option for help.
@@ -32,8 +32,10 @@ NuML-GUI
         - Model inference firmware code generation.
         - G-sensor model with ARM SDS and RTX5 firmware code generation.
         - Image classification firmware code generation.
-    - Click the `Deployment`, `- EI` tab, and select your downloaded Edge Impulse SDK folder (Please  selected deployment as `Ethos-U55-256 library`). Keil and VSCode CMSIS projects are supported.
-        - Model inference firmware code generation.    
+    - Click the `Deployment`, `- Edge Impulse` tab, and select your downloaded Edge Impulse SDK folder (Please  selected deployment as `Ethos-U55-256 library`). Keil and VSCode CMSIS projects are supported.
+        - Model inference firmware code generation.
+        - Image classification firmware code generation.
+        - KWS firmware code generation.  
 
 
 ## Tools we use

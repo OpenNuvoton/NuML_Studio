@@ -1,11 +1,20 @@
+"""NuML_TFLM_Tool command line interface."""
+import time
 import argparse
-import logging
 import sys
+
 from .project_generate import add_generate_parser
+t2 = time.time()
 from .project_build import add_build_parser
+t3 = time.time()
 from .project_flash import add_flash_parser
+t4 = time.time()
 from .project_deploy import add_deploy_parser
+t5 = time.time()
 from .project_ei_generate import add_ei_generate_parser
+t6 = time.time()
+
+print("INFO: Imports numl_tool times:", t3-t2, t4-t3, t5-t4, t6-t5)
 
 REGISTERED_PARSER = [add_generate_parser, add_build_parser, add_flash_parser, add_deploy_parser, add_ei_generate_parser]
 

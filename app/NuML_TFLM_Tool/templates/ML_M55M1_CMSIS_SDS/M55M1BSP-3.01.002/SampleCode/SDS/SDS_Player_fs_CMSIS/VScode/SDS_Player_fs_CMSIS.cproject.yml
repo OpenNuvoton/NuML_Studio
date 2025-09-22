@@ -5,11 +5,11 @@ project:
     - pack: ARM::CMSIS-Driver
     - pack: ARM::CMSIS-Compiler
     - pack: ARM::CMSIS-RTX
-    - pack: ARM::SDS
+    - pack: ARM::SDS@^1.1.0
     - pack: Keil::MDK-Middleware
   components:
     - component: CMSIS:CORE # CMSIS-Core component is required
-    - component: CMSIS:OS Tick #
+    - component: CMSIS:OS Tick:SysTick #
     - component: CMSIS:RTOS2:Keil RTX5&Source # CMSIS RTOS2 Keil RTX5 component with default variant (any version)
     - component: CMSIS Driver:USB Host:Custom # CMSIS Driver USB Host custom implementation
     - component: CMSIS-Compiler:CORE
@@ -21,7 +21,7 @@ project:
     - component: USB&MDK:Host # USB Host component
     - component: USB&MDK:Host:MSC # USB Host HID implementation
     - component: ARM::SDS:Buffer
-    - component: ARM::SDS:Player
+    - component: SDS:Player&CMSIS-RTOS2
     - component: ARM::SDS:IO:File System&MDK FS
   setups:
     - output:

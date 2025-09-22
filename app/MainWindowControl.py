@@ -1,7 +1,7 @@
 '''
 MainWindow Control for UI_MainWindow.py
 '''
-
+import time
 import sys
 import os
 from pathlib import Path
@@ -20,8 +20,8 @@ from .sds_utilities import sds_view
 from .sds_utilities import sdsio_server
 from .sds_utilities import sds_convert
 from .sds_utilities import flash_fw
-from .NuML_TFLM_Tool import numl_tool
-from .NuML_TFLM_Tool.ei_upload import EiUploadDir
+#from .NuML_TFLM_Tool import numl_tool
+#from .NuML_TFLM_Tool.ei_upload import EiUploadDir
 
 # Recording firmware list
 record_fw_list = [
@@ -50,6 +50,8 @@ deployed_application_list = [
 ei_deployed_application_list = [
     # combox's text, application type
     ['EI Inference Example', 'generic'],
+    ['EI Image Classification Example', 'imgclass'],
+    ['EI KWS Example', 'kws'],
 ]
 
 def get_download_folder():
@@ -255,7 +257,7 @@ class FlashThread(QThread):
         else:
             self.finished.emit("Flashing complete!")  # notify UI when done
 
-class myMainWindow(QMainWindow, Ui_NuMLTool):
+class MyMainWindow(QMainWindow, Ui_NuMLTool):
     """
     This class represents the main window of the application, inheriting from QMainWindow and Ui_NuMLTool.
     It provides functionality for interacting with various components of the application, including SDS view, 
@@ -274,11 +276,11 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         self.add_page("Upload", self.page_Upload)
         self.add_page("Deployment", self.page_Deployment)
         self.add_page("Nuvoton", self.page)
-        self.add_page("EI", self.page_2)
+        self.add_page("Edge Impulse", self.page_2)
 
         self.pages_structure = {
             "Record Data": ["Recording", "View", "Output", "Upload"],
-            "Deployment": ["Nuvoton", "EI"],
+            "Deployment": ["Nuvoton", "Edge Impulse"],
         }
 
         # --- Set up the Collapsible Menu ---
@@ -395,7 +397,7 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         """
         name = item.text(0).lstrip('- ').strip()
         if name in self.pages:
-            self.switch_page(name) 
+            self.switch_page(name)
 
     def close_event(self, event):
         """
@@ -435,7 +437,8 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         Opens a file dialog to select a YAML file and displays the selected file path 
         in a text edit widget.
         """
-        filepath , filetype = QFileDialog.getOpenFileName(
+        # filepath , filetype
+        filepath , _ = QFileDialog.getOpenFileName(
             directory='sds_out_dir', filter='*.yml')
         # show file path in textEdit
         self.textEdit_5_yamlF_2.setPlainText(filepath)
@@ -446,7 +449,8 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         Opens a file dialog to select an SDS file and displays the selected file path 
         in a text edit widget.
         """
-        filepath , filetype = QFileDialog.getOpenFileName(
+        # filepath , filetype
+        filepath , _ = QFileDialog.getOpenFileName(
             directory='sds_out_dir', filter='*.sds')
         # show file path in textEdit
         self.textEdit_6_sdsF_2.setPlainText(filepath)
@@ -493,12 +497,12 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         project_types = [item[0] for item in deployed_project_type_list]
         self.comboBox_5.addItems(project_types)
 
-    def populate_deployed_application(self, input_application_list, comboBox):
+    def populate_deployed_application(self, input_application_list, combo_box):
         """
         Populates the comboBox widget with a list of deployed applications.
         """
         applications = [item[0] for item in input_application_list]
-        comboBox.addItems(applications)
+        combo_box.addItems(applications)
 
     def populate_firmwares(self):
         """
@@ -596,7 +600,8 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         """
         Opens a file dialog to select an SDS file and displays the selected file's path 
         """
-        filepath , filetype = QFileDialog.getOpenFileName(
+        # filepath , filetype
+        filepath , _ = QFileDialog.getOpenFileName(
             directory='sds_out_dir', filter='*.sds')
         # show file path in textEdit
         self.textEdit_10_sdsF_2.setPlainText(filepath)
@@ -627,7 +632,8 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         """
         Opens a file dialog for selecting a YAML file and displays the selected file's path 
         """
-        filepath , filetype = QFileDialog.getOpenFileName(
+        # filepath , filetype
+        filepath , _ = QFileDialog.getOpenFileName(
             directory='sds_out_dir', filter='*.yml')
         # show file path in textEdit
         self.textEdit_9_yamlF_2.setPlainText(filepath)
@@ -668,7 +674,8 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         Opens a file dialog for selecting a TensorFlow Lite (*.tflite) model file 
         and displays the selected file path in a text edit widget.
         """
-        filepath , filetype = QFileDialog.getOpenFileName(
+        # filepath , filetype
+        filepath , _ = QFileDialog.getOpenFileName(
             directory='models', filter='*.tflite')
         # show file path in textEdit
         self.textEdit_10.setPlainText(filepath)
@@ -689,14 +696,14 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         self.textEdit_12.setPlainText(folderpath)
         self.textEdit_12.ensureCursorVisible()
 
-    def show_textedit_out_path_default(self, textEdit, default_dir_name="gen_proj_ml"):
+    def show_textedit_out_path_default(self, text_edit, default_dir_name="gen_proj_ml"):
         """
         Sets the default output path in the text edit widget.
         """
-        textEdit.setPlainText(os.path.join(r'C:/', default_dir_name))
-        textEdit.ensureCursorVisible()
+        text_edit.setPlainText(os.path.join(r'C:/', default_dir_name))
+        text_edit.ensureCursorVisible()
 
-    def show_textedit_out_path(self, textEdit, default_dir_name="gen_proj_ml"):
+    def show_textedit_out_path(self, text_edit, default_dir_name="gen_proj_ml"):
         """
         Opens a dialog for the user to select or create a folder, then sets the 
         text of `textEdit_8` to the selected folder path appended with a default 
@@ -710,8 +717,8 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
             QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
         )
 
-        textEdit.setPlainText(os.path.join(folderpath, default_dir_name))
-        textEdit.ensureCursorVisible()
+        text_edit.setPlainText(os.path.join(folderpath, default_dir_name))
+        text_edit.ensureCursorVisible()
 
     def handle_combobox5_change(self, text):
         """
@@ -728,10 +735,19 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
             self.label_36.setEnabled(False)
             self.comboBox_6.setEnabled(False)
 
+    def numl_tool_lazy_import(self):
+        """
+        Lazily imports the numl_tool module to avoid circular import issues.
+        """
+        global numl_tool
+        from .NuML_TFLM_Tool import numl_tool
+
     def execute_numltool(self):
         """
         Executes the NuML_TFLM_Tool based on the provided configuration parameters.
         """
+        print("Import Nuvoton tflu deployment ...")
+        self.numl_tool_lazy_import()
         numl_type = self.comboBox_3.currentText()
         tflite_model = self.textEdit_10.toPlainText()
         board = self.comboBox_4.currentText()
@@ -762,7 +778,7 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
                     numl_tool.start(['generate', '--model_file', tflite_model, '--board', board,
                                      '--output_path', out_proj_path, '--project_type', proj_type, '--application', app_type, '--model_arena_size', arena_size])
             except RuntimeError as e:
-                print(f"Error in thread: {e}")        
+                print(f"Error in thread: {e}")
 
         print("Nuvoton tflu deployment executed done.")
 
@@ -770,6 +786,8 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         """
         Executes the Edge Impulse SDK deployment process based on the provided configuration parameters.
         """
+        print("Import Edge Impulse deployment ...")
+        self.numl_tool_lazy_import()
         numl_type = self.comboBox_11.currentText()
         eisdk_path = self.textEdit_12.toPlainText()
         board = self.comboBox_12.currentText()
@@ -812,10 +830,19 @@ class myMainWindow(QMainWindow, Ui_NuMLTool):
         self.textEdit_10_sdsF_3.setPlainText(folderpath)
         self.textEdit_10_sdsF_3.ensureCursorVisible()
 
+    def ei_sdk_lazy_import(self):
+        """
+        Lazily imports the EiUploadDir class from the ei_upload module to avoid circular import issues.
+        """
+        global EiUploadDir
+        from .NuML_TFLM_Tool.ei_upload import EiUploadDir
+
     def execute_eiupload(self):
         """
         Executes the upload process to Edge Impulse using the specified folder path, category, and label.
         """
+        print("Import Edge Impulse upload ...")
+        self.ei_sdk_lazy_import()
         folderpath = self.textEdit_10_sdsF_3.toPlainText()
         category = self.comboBox_serverType_convertFormat_3.currentText()
         label = self.lineEdit_4.text()
@@ -863,7 +890,7 @@ def main(argv=None):
         SystemExit: Exits the application when the event loop ends.
     """
     app = QApplication(sys.argv)
-    window = myMainWindow()
+    window = MyMainWindow()
     window.show()
     sys.exit(app.exec_())
 

@@ -3,3 +3,4 @@ __version__ = "0.1.0"
 
 from .generic_ei_codegen import *
 from .InputFiles_hpp_codegen import *
+from .main_cpp_codegen import *

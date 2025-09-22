@@ -2075,7 +2075,7 @@ class Ui_NuMLTool(object):
 
     def retranslateUi(self, NuMLTool):
         _translate = QtCore.QCoreApplication.translate
-        NuMLTool.setWindowTitle(_translate("NuMLTool", "NuML-GUI"))
+        NuMLTool.setWindowTitle(_translate("NuMLTool", "NuML_Studio"))
         self.label.setText(_translate("NuMLTool", "<html><head/><body><p><img src=\":/newPrefix/320px-Nuvoton.png\"/></p></body></html>"))
         self.treeWidget.headerItem().setText(0, _translate("NuMLTool", "1"))
         __sortingEnabled = self.treeWidget.isSortingEnabled()
@@ -2087,7 +2087,7 @@ class Ui_NuMLTool(object):
         self.treeWidget.topLevelItem(0).child(7).setText(0, _translate("NuMLTool", "- Upload"))
         self.treeWidget.topLevelItem(2).setText(0, _translate("NuMLTool", "Deployment"))
         self.treeWidget.topLevelItem(2).child(1).setText(0, _translate("NuMLTool", "- Nuvoton"))
-        self.treeWidget.topLevelItem(2).child(3).setText(0, _translate("NuMLTool", "- EI"))
+        self.treeWidget.topLevelItem(2).child(3).setText(0, _translate("NuMLTool", "- Edge Impulse"))
         self.treeWidget.setSortingEnabled(__sortingEnabled)
         self.label_16.setText(_translate("NuMLTool", "Recording"))
         self.label_41.setText(_translate("NuMLTool", "Need Nuvoton board firmware to connect to PC"))
@@ -2153,7 +2153,7 @@ class Ui_NuMLTool(object):
         self.pushButton_10.setText(_translate("NuMLTool", "Execute"))
         self.label_51.setText(_translate("NuMLTool", "Usage"))
         self.comboBox_11.setItemText(0, _translate("NuMLTool", "Generate project"))
-        self.label_52.setText(_translate("NuMLTool", "Download EI SDK Path"))
+        self.label_52.setText(_translate("NuMLTool", "Download Edge Impulse SDK Path"))
         self.pushButton_14.setText(_translate("NuMLTool", "Choose"))
         self.label_53.setText(_translate("NuMLTool", "Board"))
         self.comboBox_12.setItemText(0, _translate("NuMLTool", "NuMaker-M55M1"))

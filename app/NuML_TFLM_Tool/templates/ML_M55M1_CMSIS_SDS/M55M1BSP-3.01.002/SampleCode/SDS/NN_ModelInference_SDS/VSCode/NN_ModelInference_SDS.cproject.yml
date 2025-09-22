@@ -4,7 +4,7 @@ project:
     - pack: ARM::CMSIS
     - pack: ARM::CMSIS-Driver
     - pack: ARM::CMSIS-RTX
-    - pack: ARM::SDS
+    - pack: ARM::SDS@^1.1.0
     #- pack: ARM::CMSIS-NN@^4.0.0
     #- pack: ARM::CMSIS-DSP@^1.10.1
   components:

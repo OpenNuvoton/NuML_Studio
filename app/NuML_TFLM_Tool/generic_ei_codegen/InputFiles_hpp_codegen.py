@@ -1,11 +1,17 @@
+"""
+InputFiles.hpp codegen for imgclass_ei project.
+"""
+import time
 import os
 import json
 import io
-from PIL import Image
+import random
 from random import randrange
 
+from PIL import Image
 from jinja2 import Environment, FileSystemLoader
 import numpy as np
+
 from edgeimpulse.experimental.data import (
     get_sample_ids,
     download_samples_by_ids,
@@ -13,10 +19,15 @@ from edgeimpulse.experimental.data import (
 
 DEBUG_LOG = False
 
-def pull_ei_representative_data(api_key, specify_label = None, download_num = 4):
+def pull_ei_representative_data(api_key, raw_sample_count, specify_label = None, download_num = 4):
+    """
+    Pulls representative data from Edge Impulse API based on specified parameters.
+    """
     # 1. Get sample IDs (optionally filter by category etc.)
+    rnadom_en = True
+
     try:
-        sample_infos = get_sample_ids( category="testing", api_key=api_key)
+        sample_infos = get_sample_ids( category="testing", api_key=api_key, timeout_sec=10)
     except Exception as e:
         print("Error retrieving get_sample_ids:", str(e))
         return None
@@ -24,6 +35,9 @@ def pull_ei_representative_data(api_key, specify_label = None, download_num = 4)
     if not sample_infos:
         print("Warning: No sample infos retrieved. Please check your API key and project settings.")
         return None
+
+    if rnadom_en:
+        random.shuffle(sample_infos)
 
     # 2. Extract the IDs for unique label
     unique_samples = {}
@@ -51,7 +65,7 @@ def pull_ei_representative_data(api_key, specify_label = None, download_num = 4)
 
     # 3. Download samples by IDs
     flattened_values = []
-    samples = download_samples_by_ids(sample_ids=ids, api_key=api_key, show_progress=True)
+    samples = download_samples_by_ids(sample_ids=ids, api_key=api_key, show_progress=True, timeout_sec=10)
 
     for sample in samples:
         print(f"Choose {specify_label} test data:")
@@ -68,17 +82,30 @@ def pull_ei_representative_data(api_key, specify_label = None, download_num = 4)
             values = sample_json.get("payload", {}).get("values", [])
             flattened_values = np.array(values).flatten().tolist()
 
+            # pack the flattened_values to the required size raw_sample_count
+            if len(flattened_values) < raw_sample_count:
+                flattened_values.extend([0.0] * (raw_sample_count - len(flattened_values)))
+            elif len(flattened_values) > raw_sample_count:
+                flattened_values = flattened_values[:raw_sample_count]
+
         elif isinstance(sample.data, io.BytesIO):
-            if sample.filename.endswith(('.png', '.jpg', '.jpeg')):  # Image, not implemented/tested on C++ fw yet 
+            if sample.filename.endswith(('.png', '.jpg', '.jpeg')):  # Image, not implemented/tested on C++ fw yet
                 sample.data.seek(0)
                 img = Image.open(sample.data)
-                img_np = np.array(img)
+                img = img.convert("RGB").resize((96, 96))
+                img_np = np.array(img, dtype=np.uint8)
 
                 if DEBUG_LOG:
                     np.save("image_sample.npy", img_np)
                     img.save("image_sample.png")
 
-                flattened_values = np.array(img_np).flatten().tolist()
+                #flattened_values = np.array(img_np).flatten().tolist()
+                # Encode RGB888 into a single float per pixel
+                flattened_values = (
+                    (img_np[:, :, 0] << 16) +  # Red channel
+                    (img_np[:, :, 1] << 8) +  # Green channel
+                    (img_np[:, :, 2])  # Blue channel
+                ).flatten().tolist()
             elif sample.filename.endswith(('.wav')):   # audio, not implemented/tested on C++ fw yet
                 sample.data.seek(0)
                 audio_bytes = sample.data.read()
@@ -89,10 +116,17 @@ def pull_ei_representative_data(api_key, specify_label = None, download_num = 4)
                     with open("audio_sample.wav", "wb") as f:
                         f.write(audio_bytes)
 
-                flattened_values = np.array(audio_np).flatten().tolist()        
+                flattened_values = np.array(audio_np).flatten().tolist()
+
+                # pack the flattened_values to the required size raw_sample_count
+                if len(flattened_values) < raw_sample_count:
+                    flattened_values.extend([0.0] * (raw_sample_count - len(flattened_values)))
+                elif len(flattened_values) > raw_sample_count:
+                    flattened_values = flattened_values[:raw_sample_count]
             else:
                 print("Unknown file type for", sample)
-                sample_json = json.loads(sample.data.seek(0))
+                sample.data.seek(0)
+                sample_json = json.loads(sample.data.read())
 
                 if DEBUG_LOG:
                     with open("sample.json", "w", encoding="utf-8") as f:
@@ -100,7 +134,14 @@ def pull_ei_representative_data(api_key, specify_label = None, download_num = 4)
 
                 # convert the data to 1 dim
                 values = sample_json.get("payload", {}).get("values", [])
-                flattened_values = np.array(values).flatten().tolist()        
+                flattened_values = np.array(values).flatten().tolist()
+
+                # pack the flattened_values to the required size raw_sample_count
+                if len(flattened_values) < raw_sample_count:
+                    flattened_values.extend([0.0] * (raw_sample_count - len(flattened_values)))
+                elif len(flattened_values) > raw_sample_count:
+                    flattened_values = flattened_values[:raw_sample_count]
+
         else:
             print("Unknown data type for", sample)
 
@@ -109,7 +150,13 @@ def pull_ei_representative_data(api_key, specify_label = None, download_num = 4)
     return szwriteline
 
 class InputFilesHPPCodegen:
+    """
+    A class responsible for generating C++ header files based on a template and input data.
+    """
     def code_gen(self, gen_file, temp_file_path, inputdata_size_1d, ei_apikey, specify_label=None):
+        """
+        Generates code by rendering a template file with provided data and writes the output to a specified file.
+        """
 
 
         tmpl_dirname = os.path.dirname(temp_file_path)
@@ -125,7 +172,7 @@ class InputFilesHPPCodegen:
             gen_fake_data = [0.5] * inputdata_size_1d
             define_input_test_data_str = ', '.join(map(str, gen_fake_data))
         else:
-            define_input_test_data_str = pull_ei_representative_data(ei_apikey, specify_label)
+            define_input_test_data_str = pull_ei_representative_data(ei_apikey, inputdata_size_1d, specify_label)
             if not define_input_test_data_str:
                 print("Warning: Failed to pull representative data from Edge Impulse. Using default data (0.5) instead.")
                 gen_fake_data = [0.5] * inputdata_size_1d

@@ -1,28 +1,33 @@
+'''
+ei_upload.py
+Uploads all files in a specified directory to Edge Impulse.
+'''
 import os
-from pathlib import Path
 
 from datetime import datetime
 import edgeimpulse as ei
-import warnings
 
 class EiUploadDir():
+    """
+    A class to handle uploading files to Edge Impulse from a specified directory.
+    """
     def __init__(self):
         # Edit to your Edge Impulse project API key
-        self.EI_API_KEY = None
+        self.my_ei_api_key = None
         with open('API_Key.txt', 'r', encoding='utf-8') as file:
-            self.EI_API_KEY = file.readline().strip()
-        
-        if not self.EI_API_KEY:
+            self.my_ei_api_key = file.readline().strip()
+
+        if not self.my_ei_api_key:
             raise ValueError("API key is missing or empty in API_Key.txt")
-        
+
     def upload_dir(self, directory, category="training", label=None):
         """
         Uploads all files in the specified directory to Edge Impulse.
         """
         if not os.path.isdir(directory):
             raise ValueError(f"Provided path '{directory}' is not a valid directory.")
-        
-        ei.API_KEY = self.EI_API_KEY
+
+        ei.API_KEY = self.my_ei_api_key
 
         try:
             print(f"Uploading directory...: {directory}")
@@ -45,7 +50,7 @@ class EiUploadDir():
                 print(response.fails)
             else:
                 print("Upload finished successfully!")
-            
+
             ## Save the sample IDs, as we will need these to retrieve file information and delete samples
             #ids = []
             #for sample in response.successes:
@@ -62,4 +67,4 @@ class EiUploadDir():
             print(f"Error in thread: {e}")
         except Exception as e:
             # Handle all other exceptions gracefully
-            print(f"An unexpected error occurred: {e}")    
+            print(f"An unexpected error occurred: {e}")
