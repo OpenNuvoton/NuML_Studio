@@ -14,8 +14,8 @@ NuML_Studio
 #### NuMaker-M55M1
 - **Collecting data**: click the `- Recording` tab, and click `FLASH Firmware` to flash [firmware](https://github.com/OpenNuvoton/ML_M55M1_CMSIS_SDS/tree/master) into your board.
     - Supports the following options, and users can modify them as needed:
-        - G-sensor (3-axis): [SDS_Recorder_gsensor_uart_CMSIS firmware](https://github.com/OpenNuvoton/ML_M55M1_CMSIS_SDS/tree/master/M55M1BSP-3.01.001/SampleCode/SDS/SDS_Recorder_gsensor_uart_CMSIS)
-        - Audio (16Khz): [SDS_Recorder_audio_uart_CMSI firmware](https://github.com/OpenNuvoton/ML_M55M1_CMSIS_SDS/tree/master/M55M1BSP-3.01.001/SampleCode/SDS/SDS_Recorder_audio_uart_CMSI)
+        - G-sensor (3-axis): [SDS_Recorder_Gsensor_UART_CMSIS Firmware](https://github.com/OpenNuvoton/ML_M55M1_CMSIS_SDS/tree/master/M55M1BSP-3.01.002/SampleCode/SDS/SDS_Recorder_gsensor_uart_CMSIS)
+        - Audio (16Khz): [SDS_Recorder_Audio_UART_CMSIS Firmware](https://github.com/OpenNuvoton/ML_M55M1_CMSIS_SDS/tree/master/M55M1BSP-3.01.002/SampleCode/SDS/SDS_Recorder_audio_uart_CMSIS)
         - Image (supports UVC using the NuMaker-M55M1's image sensor or the PC's webcam)
     - Convert the data to standard format in `- Output` tab:
         - Users can select `csv format` to convert sensor `*.sds` data into `*.csv`.
@@ -50,10 +50,10 @@ NuML_Studio
     - [PyStand](https://github.com/skywind3000/PyStand)
 - Steps:
 
-- Download the embedded Python `3.10.6` and copy it to the `runtime` directory.
-
-- In a Python virtual environment (venv), use pip to install the dependencies listed in `requirements.txt`, then copy the `site-packages` directory to here.
-**Warning**: The version of the Python virtual environment must exactly match the embedded Python version.
-
-- Call the CLI module's entry point directly as a Python module using the embedded Python
-    - Edit `python310._pth` (depends on your version) in `runtime` to add your `site-packages`. (The example is in `runtime/python310._pth`)
+    - Download the embedded Python `3.10.6` and copy it to the `runtime` directory.
+    
+    - In a Python virtual environment (venv), use pip to install the dependencies listed in `requirements.txt`, then copy the `site-packages` directory to here.
+    **Warning**: The version of the Python virtual environment must exactly match the embedded Python version.
+    
+    - Call the CLI module's entry point directly as a Python module using the embedded Python
+        - Edit `python310._pth` (depends on your version) in `runtime` to add your `site-packages`. (The example is in `runtime/python310._pth`)
