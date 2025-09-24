@@ -1,9 +1,9 @@
-NuML_Studio
-===
-This is the UI tool of TFLM ML model project generate and real time data collection tool for Nuvoton ML MCU. It can be executed on Windows without the need to install Python or any related libraries.
+# NuML_Studio
+
+This is a UI tool for generating TFLM ML model projects and collecting real-time data for Nuvoton ML MCUs. It can be executed on Windows without the need to install Python or any related libraries.
 
 ## How this works
-- Download from newest [release](https://github.com/MaxCYCHEN/NuML_embedded/releases) or build yourself.
+- Download the latest [release](https://github.com/MaxCYCHEN/NuML_embedded/releases) or build yourself.
 - Double-click `NuML_Studio.exe` to launch the tool.
     - If you want to upload to Edge Impulse or download single test data to deployment, please update your project API key in `API_key.txt`.
 
@@ -19,7 +19,7 @@ This is the UI tool of TFLM ML model project generate and real time data collect
         - Image (supports UVC using the NuMaker-M55M1's image sensor or the PC's webcam)
     - Convert the data to standard format in `- Output` tab:
         - Users can select `csv format` to convert sensor `*.sds` data into `*.csv`.
-        - User can select `audio_wav format` to convert audio `*.sds` data  into `*.wav`.
+        - Users can select `audio_wav format` to convert audio `*.sds` data  into `*.wav`.
         - Images collected in `CAM_APP` under `Recording` are already saved as `*.jpg`
      
 - **Upload data to EdgeImpulse**:
@@ -32,7 +32,7 @@ This is the UI tool of TFLM ML model project generate and real time data collect
         - Model inference firmware code generation.
         - G-sensor model with ARM SDS and RTX5 firmware code generation.
         - Image classification firmware code generation.
-    - Click the `Deployment`, `- Edge Impulse` tab, and select your downloaded Edge Impulse SDK folder (Please  selected deployment as `Ethos-U55-256 library`). Keil and VSCode CMSIS projects are supported.
+    - Click the `Deployment`, `- Edge Impulse` tab, and select your downloaded Edge Impulse SDK folder (Please  select deployment as `Ethos-U55-256 library`). Keil and VSCode CMSIS projects are supported.
         - Model inference firmware code generation.
         - Image classification firmware code generation.
         - KWS firmware code generation.  
