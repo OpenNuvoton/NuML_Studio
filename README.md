@@ -1,6 +1,6 @@
 NuML_Studio
 ===
-### This is the UI tool of TFLM ML model project generate and real time data collection tool for Nuvoton ML MCU. It can be executed on Windows without the need to install Python or any related libraries.
+This is the UI tool of TFLM ML model project generate and real time data collection tool for Nuvoton ML MCU. It can be executed on Windows without the need to install Python or any related libraries.
 
 ## How this works
 - Download from newest [release](https://github.com/MaxCYCHEN/NuML_embedded/releases) or build yourself.
