@@ -3,7 +3,8 @@
 This is a UI tool for generating TFLM ML model projects and collecting real-time data for Nuvoton ML MCUs. It can be executed on Windows without the need to install Python or any related libraries.
 
 ## How this works
-- Download the latest [release](https://github.com/OpenNuvoton/NuML_Studio/releases) or build yourself.
+- The GitHub repository mainly provides source code. For a directly executable version, please download the .7z file from [release](https://github.com/OpenNuvoton/NuML_Studio/releases) and extract it to run.
+    - If you want to install from source, refer to the "Build yourself" steps below
 - Double-click `NuML_Studio.exe` to launch the tool.
     - If you want to upload to Edge Impulse or download single test data to deployment, please update your project API key in `API_key.txt`.
 
