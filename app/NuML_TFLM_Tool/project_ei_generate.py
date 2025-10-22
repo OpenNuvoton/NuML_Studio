@@ -179,7 +179,59 @@ def ei_tesnor_size_update(model_parameters_dir_path, tflite_model_dir_path, mul_
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.writelines(lines)
 
+def ei_tflite_micro_h_update(tensor_arena_src_export_file, tensor_arena_dst_export_file, tflite_micro_h_path):
+    """
+    Updates the `tflite_micro.h` file to include a custom tensor arena definition and 
+    comments out the original tensor arena definition. This function is specifically 
+    tailored for Nuvoton MPU configurations.
+    Example:
+        ei_tflite_micro_h_update("/path/to/tflite_micro.h")
+    """
+    # copy exported tensor_arena definition file first
+    shutil.copyfile(add_long_path_prefix(tensor_arena_src_export_file), add_long_path_prefix(tensor_arena_dst_export_file))
+    print(f"copy {tensor_arena_src_export_file} to {tensor_arena_dst_export_file}")
+
+    # Lines to add
+    lines_to_add = [
+        "/* Nuvoton update, for MPU config*/",
+        "    uint8_t tensor_arena[EI_CLASSIFIER_TFLITE_LARGEST_ARENA_SIZE] __attribute__((aligned(16), section(\".bss.NoInit.activation_buf_sram\")));"
+    ]
+
+    # Read the file
+    lines = []
+    with open(tflite_micro_h_path, "r", encoding="utf-8") as file:
+        lines = file.readlines()
+
+    # Find the insertion point
+    new_lines = []
+    ei_classifier_allocation_static_found = False # ensure only insert once
+    ei_ori_tensor_arena_found = False
+    for i, line in enumerate(lines):
+        new_lines.append(line)
+        if "#ifdef EI_CLASSIFIER_ALLOCATION_STATIC" in line and not ei_classifier_allocation_static_found:
+            new_lines.extend(line + "\n" for line in lines_to_add)
+            ei_classifier_allocation_static_found = True
+        if "// Assign a no-op lambda to the" in line and not ei_ori_tensor_arena_found:
+            lines[i + 1] = "    //" + lines[i + 1]  # comment out the next line tensor_arena
+            new_lines.append("    /* Nuvoton update, for MPU config*/" + "\n")
+            ei_ori_tensor_arena_found = True
+
+    if not ei_classifier_allocation_static_found:
+        print("Error: #ifdef EI_CLASSIFIER_ALLOCATION_STATIC not found, unable to insert tensor_arena definition.")
+    elif not ei_ori_tensor_arena_found:
+        print("Error: Original tensor_arena definition not found, unable to comment it out.")
+    else:
+        print("Successfully updated tflite_micro.h with new tensor_arena definition.")       
+
+    # Write the updated content back to the file
+    with open(tflite_micro_h_path, "w", encoding="utf-8") as file:
+        file.writelines(new_lines)
+
 def add_long_path_prefix(path: str) -> str:
+    """
+    Adds the long path prefix (`\\?\`) to a given file path to support paths 
+    longer than the Windows MAX_PATH limitation (260 characters).
+    """
     # Always normalize to absolute path with backslashes
     abs_path = os.path.abspath(path)
     abs_path = abs_path.replace("/", "\\")   # ensure backslashes only
@@ -252,6 +304,30 @@ def prepare_ei_proj_resource(board_info, project_path, templates_path, new_ei_sd
     print('copy edgeimpulse sdk...')
     shutil.copytree(add_long_path_prefix(example_template_path), add_long_path_prefix(example_project_path), dirs_exist_ok=True)
 
+    # update SDK's code, bcs version may changed (classifier/, dsp/), 10/13/2025
+    print('update EI SDK code ...')
+    example_ei_sdk_dst_path_1 = Path(bsp_dest_path, 'ThirdParty', 'edgeimpulse', 'edge-impulse-sdk', 'classifier')
+    example_ei_sdk_dst_path_2 = Path(bsp_dest_path, 'ThirdParty', 'edgeimpulse', 'edge-impulse-sdk', 'dsp')
+    try:
+        shutil.rmtree(add_long_path_prefix(example_ei_sdk_dst_path_1))
+    except OSError as e:
+        print(f"Error rmtree {example_ei_sdk_dst_path_1}: {e}")
+    try:
+        shutil.rmtree(add_long_path_prefix(example_ei_sdk_dst_path_2))
+    except OSError as e:
+        print(f"Error rmtree {example_ei_sdk_dst_path_2}: {e}")
+    example_ei_sdk_src_dir_1 = os.path.join(new_ei_sdk_path, 'edge-impulse-sdk', 'classifier')
+    example_ei_sdk_src_dir_2 = os.path.join(new_ei_sdk_path, 'edge-impulse-sdk', 'dsp')
+    shutil.copytree(add_long_path_prefix(example_ei_sdk_src_dir_1), add_long_path_prefix(example_ei_sdk_dst_path_1), dirs_exist_ok=True)
+    shutil.copytree(add_long_path_prefix(example_ei_sdk_src_dir_2), add_long_path_prefix(example_ei_sdk_dst_path_2), dirs_exist_ok=True)
+
+    # implemente nuvoton's update, 10/13/2025
+    tensor_arena_src_export_file = Path(templates_path, example_proj_list[0], example_proj_list[2], 'ThirdParty', 'edgeimpulse', 'edge-impulse-sdk', 'classifier', 'inferencing_engines', 'tflite_micro_extern.h')
+    tensor_arena_dst_export_file = Path(bsp_dest_path, 'ThirdParty', 'edgeimpulse', 'edge-impulse-sdk', 'classifier', 'inferencing_engines', 'tflite_micro_extern.h')
+    ei_tflite_micro_h_update(tensor_arena_src_export_file, tensor_arena_dst_export_file,
+                             Path(bsp_dest_path, 'ThirdParty', 'edgeimpulse', 'edge-impulse-sdk', 'classifier', 'inferencing_engines', 'tflite_micro.h'))
+
+
     # copy the user's new model folders
     example_project_path = os.path.join(bsp_dest_path, 'SampleCode', example_tmpl_dir, example_tmpl_proj)
     example_model_parameters_src_dir = os.path.join(new_ei_sdk_path, 'model-parameters')
@@ -263,12 +339,10 @@ def prepare_ei_proj_resource(board_info, project_path, templates_path, new_ei_sd
     print('copy the new model...')
     # remove the dst model dir first, bcs for new version, the model/parameters files name maybe changed
     example_project_edgeimpulse_dir = os.path.join(example_project_path, 'edgeimpulse_model')
-
     try:
         shutil.rmtree(example_project_edgeimpulse_dir)
     except OSError as e:
         print(f"Error rmtree {example_project_edgeimpulse_dir}: {e}")
-
     shutil.copytree(add_long_path_prefix(example_model_parameters_src_dir), add_long_path_prefix(os.path.join(example_project_edgeimpulse_dir, 'model-parameters')), dirs_exist_ok=True)
     shutil.copytree(add_long_path_prefix(example_tflite_model_src_dir), add_long_path_prefix(os.path.join(example_project_edgeimpulse_dir, 'tflite-model')), dirs_exist_ok=True)
 

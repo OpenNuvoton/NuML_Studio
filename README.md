@@ -15,7 +15,8 @@ This is a UI tool for generating TFLM ML model projects and collecting real-time
 
 ## Support Functions
 #### NuMaker-M55M1
-- **Collecting data**: click the `- Recording` tab, and click `FLASH Firmware` to flash [firmware](https://github.com/OpenNuvoton/ML_M55M1_CMSIS_SDS/tree/master) into your board.
+- **Project**: The first step in using NuML Studio is to create a project. You can create a project for data collection, ML deployment firmware generation, or both.
+- **Collecting data**: click the `- Data Collection` tab, and click `Download Firmware to EVB` to flash [firmware](https://github.com/OpenNuvoton/ML_M55M1_CMSIS_SDS/tree/master) into your board.
     - Supports the following options, and users can modify them as needed:
         - G-sensor (3-axis): [SDS_Recorder_Gsensor_UART_CMSIS Firmware](https://github.com/OpenNuvoton/ML_M55M1_CMSIS_SDS/tree/master/M55M1BSP-3.01.002/SampleCode/SDS/SDS_Recorder_gsensor_uart_CMSIS)
         - Audio (16Khz): [SDS_Recorder_Audio_UART_CMSIS Firmware](https://github.com/OpenNuvoton/ML_M55M1_CMSIS_SDS/tree/master/M55M1BSP-3.01.002/SampleCode/SDS/SDS_Recorder_audio_uart_CMSIS)
@@ -23,7 +24,7 @@ This is a UI tool for generating TFLM ML model projects and collecting real-time
     - Convert the data to standard format in `- Output` tab:
         - Users can select `csv format` to convert sensor `*.sds` data into `*.csv`.
         - Users can select `audio_wav format` to convert audio `*.sds` data  into `*.wav`.
-        - Images collected in `CAM_APP` under `Recording` are already saved as `*.jpg`
+        - Images collected from `Raw Image Collection` under `Data Collection` are already saved as `*.jpg`
      
 - **Upload data to EdgeImpulse**:
     - Please update your Edge Impulse project API key in `API_key.txt`.
@@ -35,7 +36,8 @@ This is a UI tool for generating TFLM ML model projects and collecting real-time
         - Model inference firmware code generation.
         - G-sensor model with ARM SDS and RTX5 firmware code generation.
         - Image classification firmware code generation.
-    - Click the `Deployment`, `- Edge Impulse` tab, and select your downloaded Edge Impulse SDK folder (Please  select deployment as `Ethos-U55-256 library`). Keil and VSCode CMSIS projects are supported.
+        - Object detection firmware code generation.
+    - Click the `Deployment`, `- Edge Impulse` tab, and select your downloaded Edge Impulse SDK folder (Please  select deployment as `Ethos-U55-256 library`). Keil and VSCode CMSIS projects are supported. (Please update your Edge Impulse project API key in `API_key.txt`)
         - Model inference firmware code generation.
         - Image classification firmware code generation.
         - KWS firmware code generation.  

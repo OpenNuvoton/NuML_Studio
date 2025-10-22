@@ -2,8 +2,8 @@
 M55M1 version of [ARM SDS-Framework](https://github.com/ARM-software/SDS-Framework)(v1.1.0)
 
 ## Requirement
-1. Need CMSIS driver (This will be added in M55M1BSP in the future) 
-2. M55M1BSP V3.01.001
+1. Need CMSIS driver (M55M1BSP V3.01.002) 
+2. M55M1BSP V3.01.002
 3. Keil uVision5 or VSCode
 ## Install
 - Manual  

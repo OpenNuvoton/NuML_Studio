@@ -14,6 +14,7 @@ from tqdm import tqdm
 
 from .generic_codegen.generic_codegen import GenericCodegen
 from .imgclass_codegen.imgclass_codegen import ImgClassCodegen
+from .objdet_codegen.objdet_codegen import ObjDetCodegen
 from .sdsgsensor_codegen.sdsgsensor_codegen import SdsGsensorCodegen
 
 PROJECT_GEN_DIR_PREFIX = 'ProjGen_'
@@ -77,7 +78,7 @@ def add_generate_parser(subparsers, _):
     parser.add_argument("--project_type", help="specify project type uvision5_armc6/make_gcc_arm/vscode", default='make_gcc_arm')
     parser.add_argument("--templates_path", help="specify template path")
     parser.add_argument("--model_arena_size", help="specify the size of arena cache memory in bytes", default='0')
-    parser.add_argument("--application", help="specify application scenario generic/imgclass/gsensor_sds", default='generic')
+    parser.add_argument("--application", help="specify application scenario generic/imgclass/objdet/gsensor_sds", default='generic')
 
 # download board BSP
 def download_bsp(board_info, templates_path):
@@ -526,9 +527,11 @@ def project_generate(args):
         codegen = GenericCodegen.from_args(vela_model_file_path, project_example_path, vela_summary_file_path, app='generic')
     elif application_usage == 'imgclass':
         codegen = ImgClassCodegen.from_args(vela_model_file_path, project_example_path, vela_summary_file_path, app='imagclass')
+    elif application_usage == 'objdet':
+        codegen = ObjDetCodegen.from_args(vela_model_file_path, project_example_path, vela_summary_file_path, app='objdet')
     elif application_usage == 'gsensor_sds':
         codegen = SdsGsensorCodegen.from_args(vela_model_file_path, project_example_path, vela_summary_file_path, app='gsensor_sds')
-    
+
     codegen.code_gen()
 
     os.remove(vela_model_file_path)

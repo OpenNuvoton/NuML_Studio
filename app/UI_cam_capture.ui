@@ -166,7 +166,7 @@ color: rgb(255, 255, 255);</string>
        </widget>
       </item>
       <item>
-       <layout class="QGridLayout" name="gridLayout" columnstretch="3,1,1">
+       <layout class="QGridLayout" name="gridLayout" columnstretch="10,3" columnminimumwidth="0,0">
         <item row="0" column="0">
          <spacer name="horizontalSpacer">
           <property name="orientation">
@@ -181,31 +181,6 @@ color: rgb(255, 255, 255);</string>
          </spacer>
         </item>
         <item row="0" column="1">
-         <widget class="QPushButton" name="pushButton">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background-color: #FFFFFF; 
-border-style: outset;
-border-radius: 10px;</string>
-          </property>
-          <property name="text">
-           <string>Capture</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="2">
          <widget class="QPushButton" name="pushButton_2">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">

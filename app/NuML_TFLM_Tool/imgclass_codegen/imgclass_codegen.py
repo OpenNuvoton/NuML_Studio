@@ -15,7 +15,7 @@ class ImgClassCodegen:
     @classmethod
     def from_args(cls, *args, **kwargs):
         return cls(*args, **kwargs)
-    
+
     def code_gen(self):
         print('Run image class codegen...')
         print(f"model:{self.model}")
@@ -23,7 +23,7 @@ class ImgClassCodegen:
         for key, value in self.extra.items():
             print(f"extra param:{key}, {value}")
 
-        template_path = os.path.dirname(os.path.abspath(__file__))
+        template_path = os.path.dirname(os.path.abspath(__file__))  # use explicit path
 
         #Generate MobileNetModel.hpp file
         NNModel_hpp_file_path = os.path.join(self.project, 'Model', 'include', 'MobileNetModel.hpp')

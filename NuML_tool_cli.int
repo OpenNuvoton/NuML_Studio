@@ -50,8 +50,16 @@ if __name__ == "__main__":
     #'--project_type', 'vscode', '--application', 'gsensor_sds', '--model_arena_size', '10000'])
 
     #start(['generate', '--model_file', 'models/vww_mobilenetv3_1.0_96_96_int8quant_min.tflite', 
-    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_2', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_7', 
     #'--project_type', 'uvision5_armc6', '--application', 'generic'])
+
+    start(['generate', '--model_file', 'models/best_full_integer_quant.tflite', 
+    '--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_8', 
+    '--project_type', 'uvision5_armc6', '--application', 'objdet'])
+
+    #start(['generate', '--model_file', 'models/best_full_integer_quant.tflite', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_9', 
+    #'--project_type', 'vscode', '--application', 'objdet'])
 
     #start(['generate_ei', '--ei_sdk_path', 'C:/Users/cychen38/Downloads/g-sensor-test2-ethos-u55-256-v11', 
     #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_ei_1', '--application', 'generic', '--specify_label', 'O'])
@@ -68,8 +76,8 @@ if __name__ == "__main__":
     #start(['generate_ei', '--ei_sdk_path', 'C:/CYCHEN38/MICRO_ML/EdgeImpulse_SDK/kws-ethos-u55-256-v2', 
     #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_ei_kws_1', '--application', 'kws'])
 
-    start(['generate_ei', '--ei_sdk_path', 'C:/CYCHEN38/MICRO_ML/EdgeImpulse_SDK/kws-ethos-u55-256-v2', 
-    '--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_ei_kws_2', '--application', 'kws', '--specify_label', 'set_to_orange'])
+    #start(['generate_ei', '--ei_sdk_path', 'C:/CYCHEN38/MICRO_ML/EdgeImpulse_SDK/kws-ethos-u55-256-v2', 
+    #'--board', 'NuMaker-M55M1', '--output_path', 'C:/gen_proj_ei_kws_2', '--application', 'kws', '--specify_label', 'set_to_orange'])
 
 
     

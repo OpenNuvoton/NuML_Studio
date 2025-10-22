@@ -8,10 +8,11 @@ from pathlib import Path
 from datetime import datetime
 
 import cv2
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QDialog
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QDialog, QTreeWidgetItem
 from PyQt5.QtGui import QTextCursor, QPixmap, QImage
 from PyQt5.QtCore import QObject, pyqtSignal, QThread, QTimer, Qt
 from PyQt5 import uic
+from PyQt5.QtWidgets import QStyle
 #from PyQt5 import QtGui
 from .Ui_MainWindow import Ui_NuMLTool
 from .UI_cam_capture import Ui_WebcamWindow
@@ -44,6 +45,7 @@ deployed_application_list = [
     ['TFLite Inference Example', 'generic'],
     ['Sds Gsensor example', 'gsensor_sds'],
     ['Image Classification example', 'imgclass'],
+    ['Object Detection (YOLOv8n) example', 'objdet'],
 ]
 
 # Application type for EI deployment
@@ -117,7 +119,7 @@ class WebcamWindow(QMainWindow):
     This class represents a GUI window for webcam operations, including camera selection, resolution configuration, 
     live video feed display, image capture, and application closure.
     """
-    def __init__(self):
+    def __init__(self, output_dir = r"sds_out_dir/images"):
         super().__init__()
         self.ui = Ui_WebcamWindow()
         self.ui.setupUi(self)
@@ -126,7 +128,7 @@ class WebcamWindow(QMainWindow):
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_frame)
         self.current_frame = None
-        self.output_dir = r"sds_out_dir/images"
+        self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
 
         self.populate_cameras()
@@ -137,7 +139,7 @@ class WebcamWindow(QMainWindow):
 
         # Connect UI buttons
         self.ui.pushButton_3.clicked.connect(self.start_camera)
-        self.ui.pushButton.clicked.connect(self.capture_image)
+        # self.ui.pushButton.clicked.connect(self.capture_image)
         self.ui.pushButton_2.clicked.connect(self.close_app)
 
     def populate_cameras(self):
@@ -267,9 +269,13 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         super().__init__()
         self.setupUi(self)
 
+        self.my_project_path = "" # User selected project path
+        self.newest_collection_path = "" # The newest collection path (project path / Data Collection / label)
+
         # --- Add Pages to StackedWidget ---
         self.pages = {}
-        self.add_page("Record Data", self.page_Record_Data) # first layer using first page
+        self.add_page("Project", self.page_Project)
+        self.add_page("Data Collection", self.page_Record_Data) # first layer using first page
         self.add_page("Recording", self.page_Recording)
         self.add_page("View", self.page_View)
         self.add_page("Output", self.page_Output)
@@ -279,7 +285,8 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         self.add_page("Edge Impulse", self.page_2)
 
         self.pages_structure = {
-            "Record Data": ["Recording", "View", "Output", "Upload"],
+            "Project": ["Project"],
+            "Data Collection": ["Recording", "View", "Output", "Upload"],
             "Deployment": ["Nuvoton", "Edge Impulse"],
         }
 
@@ -303,16 +310,28 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         self.treeWidget.expandAll()
 
         # Default page
-        self.switch_page("Recording")
+        self.switch_page("Project")
 
         # Signal connect
         self.treeWidget.itemClicked.connect(self.on_item_clicked)
+
+        # Create Project page
+        self.pushButton_outputDir_3.clicked.connect(self.choose_create_project_directory)
+        self.pushButton_sdsioServer_4.clicked.connect(self.create_project_directory)
+        self.pushButton_outputDir_4.clicked.connect(self.choose_project_directory)
+
+        self.pushButton_opendir_3.setIcon(self.style().standardIcon(QStyle.SP_MessageBoxQuestion))
+        self.pushButton_opendir_3.clicked.connect(lambda: self.open_directory_from_textedit(self.textEdit_outputDir_4, True))
 
         # print output to textEdit
         sys.stdout = Stream(newText=self.on_update_edit_sds)
         # clear textEdit buttons connect
         self.pushButton_8.clicked.connect(lambda: self.clear_text_edit(self.textEdit_2))
         self.pushButton_9.clicked.connect(lambda: self.clear_text_edit(self.textEdit_3))
+
+        # icon button setup
+        #self.pushButton_opendir_1.setIcon(self.style().standardIcon(QStyle.SP_MessageBoxQuestion))
+        #self.pushButton_opendir_1.clicked.connect(self.open_directory)
 
         # sds view connect
         self.open_windows = []
@@ -326,11 +345,12 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         self.thread_flash_fw = QThread()
 
         # sdsio server connect
-        self.pushButton_outputDir_2.clicked.connect(self.show_textedit_sdsio_outdir)
         self.pushButton_sdsioServer_2.clicked.connect(self.execute_sdsio_server)
         self.thread_a = QThread()
 
         # sds convert connect
+        self.pushButton.setIcon(self.style().standardIcon(QStyle.SP_MessageBoxQuestion))
+        self.pushButton.clicked.connect(lambda: self.open_directory_from_textedit(self.textEdit_10_sdsF_2, False))
         self.pushButton_5_sdsF_2.clicked.connect(self.show_textedit_convert_sdsfile)
         self.pushButton_outDir_2.clicked.connect(self.show_textedit_convert_outfile)
         self.pushButton_6_yamlF_2.clicked.connect(self.show_textedit_convert_yamlfile)
@@ -339,17 +359,16 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         # Deployment Nuvoton connect
         self.populate_deployed_project_type()
         self.populate_deployed_application(deployed_application_list, self.comboBox_6)
-        self.show_textedit_out_path_default(self.textEdit_8, "gen_proj_ml")
+        #self.show_textedit_out_path_default(self.textEdit_8, "gen_proj_ml")
         self.pushButton_11.clicked.connect(self.show_textedit_tflite_model)
-        self.pushButton_12.clicked.connect(lambda: self.show_textedit_out_path(self.textEdit_8))
+        #self.pushButton_12.clicked.connect(lambda: self.show_textedit_out_path(self.textEdit_8))
         self.pushButton_10.clicked.connect(self.execute_numltool)
-        #self.comboBox_5.currentTextChanged.connect(self.handle_combobox5_change)
 
         # Deployment Edge Impulse connect
         self.populate_deployed_application(ei_deployed_application_list, self.comboBox_14)
-        self.show_textedit_out_path_default(self.textEdit_13, "gen_proj_EI_ml")
+        #self.show_textedit_out_path_default(self.textEdit_13, "gen_proj_EI_ml")
         self.pushButton_14.clicked.connect(self.show_textedit_eisdk_path)
-        self.pushButton_15.clicked.connect(lambda: self.show_textedit_out_path(self.textEdit_13, "gen_proj_EI_ml"))
+        #self.pushButton_15.clicked.connect(lambda: self.show_textedit_out_path(self.textEdit_13, "gen_proj_EI_ml"))
         self.pushButton_16.clicked.connect(self.execute_eisdk_deploy)
 
         # EI upload connect
@@ -366,26 +385,126 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         """
         self.pages[name] = widget
 
+    def find_newest_folder(self, directory):
+        """
+        Finds the newest folder in the given directory based on modification time.
+
+        Args:
+            directory (str or Path): The directory to search in.
+
+        Returns:
+            Path or None: The newest folder if found, otherwise None.
+        """
+        directory = Path(directory)
+        if not directory.is_dir():
+            print(f"Error: {directory} is not a valid directory.")
+            return None
+
+        # Get all subdirectories in the directory
+        subdirs = [d for d in directory.iterdir() if d.is_dir()]
+        if not subdirs:
+            print("No subdirectories found in the directory.")
+            return None
+
+        # Find the newest folder based on modification time
+        newest_folder = max(subdirs, key=lambda d: d.stat().st_mtime)
+        return newest_folder    
+
+    def find_newest_sds_file(self, directory):
+        """
+        Finds the newest file ending with '.sds' in the given directory.
+
+        Args:
+            directory (str or Path): The directory to search in.
+
+        Returns:
+            Path or None: The newest '.sds' file if found, otherwise None.
+        """
+        directory = Path(directory)
+        if not directory.is_dir():
+            print(f"Error: {directory} is not a valid directory.")
+            return None
+
+        # Find all .sds files in the directory
+        sds_files = list(directory.glob("*.sds"))
+        if not sds_files:
+            # print("Debug: No .sds files found in the directory.")
+            return None
+
+        # Find the newest file based on modification time
+        newest_file = max(sds_files, key=lambda f: f.stat().st_mtime)
+        return newest_file
+
+    def auto_update_sds_path(self):
+        """
+        Automatically updates the newest collection path based on the current project path.
+        """
+        if self.newest_collection_path and os.path.exists(self.newest_collection_path):
+            # find newest sds file
+            newest_sds_file = self.find_newest_sds_file(self.newest_collection_path)
+            if newest_sds_file:
+                newest_sds_data_path = str(Path(self.newest_collection_path) / newest_sds_file)
+                #print(f"Debug: {newest_sds_data_path}")
+
+                # Recording page
+                self.textEdit_6_sdsF_2.setPlainText(newest_sds_data_path)
+                self.textEdit_6_sdsF_2.ensureCursorVisible()
+                # Output page
+                self.textEdit_10_sdsF_2.setPlainText(newest_sds_data_path)
+                self.textEdit_10_sdsF_2.ensureCursorVisible()
+                self.textEdit_8_outDir_2.setPlainText(str(Path(newest_sds_data_path).parent))
+                self.textEdit_8_outDir_2.ensureCursorVisible()
+                # Upload data page
+                self.textEdit_10_sdsF_3.setPlainText(str(Path(newest_sds_data_path).parent))
+                self.textEdit_10_sdsF_3.ensureCursorVisible()
+            else:
+                # clear sds file path if no sds file found
+                # Recording page
+                self.textEdit_6_sdsF_2.clear()
+                # Output page
+                self.textEdit_10_sdsF_2.clear()
+                self.textEdit_8_outDir_2.clear()
+                # Upload data page
+                self.textEdit_10_sdsF_3.clear()
+        else: # no collection path found
+            # clear sds file path if no sds file found
+            # Recording page
+            self.textEdit_6_sdsF_2.clear()
+            # Output page
+            self.textEdit_10_sdsF_2.clear()
+            self.textEdit_8_outDir_2.clear()
+            # Upload data page
+            self.textEdit_10_sdsF_3.clear()
+            return
+
+        return
+
     def switch_page(self, name):
         """
         Switches the current page in the application's user interface based on the provided page name.
         """
         # first layer
-        if name in ['Record Data']:
+        if name in ['Data Collection']:
             sys.stdout = Stream(newText=self.on_update_edit_sds)
             self.stackedWidget_Main.setCurrentWidget(self.page_Record_Data)
+            self.stackedWidget_2.setCurrentWidget(self.page_Recording)
+            self.auto_update_sds_path()
         elif name in ['Deployment']:
             sys.stdout = Stream(newText=self.on_update_edit_numltool)
             #sys.stdout = temp
             self.stackedWidget_Main.setCurrentWidget(self.page_Deployment)
+        elif name in ['Project']:
+            sys.stdout = Stream(newText=self.on_update_edit_sds)
+            self.stackedWidget_Main.setCurrentWidget(self.page_Record_Data)
+            self.stackedWidget_2.setCurrentWidget(self.page_Project)
         # second layer
-        elif name in self.pages_structure.get("Record Data", []):
+        elif name in self.pages_structure.get("Data Collection", []):
             sys.stdout = Stream(newText=self.on_update_edit_sds)
             self.stackedWidget_Main.setCurrentWidget(self.page_Record_Data)
             self.stackedWidget_2.setCurrentWidget(self.pages[name])
+            self.auto_update_sds_path()
         elif name in self.pages_structure.get("Deployment", []):
             sys.stdout = Stream(newText=self.on_update_edit_numltool)
-            #sys.stdout = temp
             self.stackedWidget_Main.setCurrentWidget(self.page_Deployment)
             self.stackedWidget_deployment.setCurrentWidget(self.pages[name])
         else:
@@ -449,9 +568,11 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         Opens a file dialog to select an SDS file and displays the selected file path 
         in a text edit widget.
         """
+        default_dir_path = self.newest_collection_path
+        default_dir_path = str(default_dir_path) if os.path.exists(default_dir_path) else 'sds_out_dir'
         # filepath , filetype
         filepath , _ = QFileDialog.getOpenFileName(
-            directory='sds_out_dir', filter='*.sds')
+            directory=default_dir_path, filter='*.sds')
         # show file path in textEdit
         self.textEdit_6_sdsF_2.setPlainText(filepath)
         self.textEdit_6_sdsF_2.ensureCursorVisible()
@@ -468,27 +589,105 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
             print("Please select both YAML and SDS files.")
             return
 
-        print(f"Executing SDS view with YAML: {yaml_file} and SDS: {sds_file}")
-        sds_view.start(['-y', yaml_file, '-s', sds_file])
+        print(f"Executing view with YAML: {yaml_file} and SDS: {sds_file}")
+        sds_view.start(['-y', yaml_file, '-s', sds_file, '-o-dir', str(Path(sds_file).parent.parent)])
         # Open the plot dialog with the image path
-        file_path = os.path.join(Path(sds_file).parent, 'myplot.png')
-        if file_path:
+        file_path = os.path.join(Path(sds_file).parent.parent, 'myplot.png')
+        if os.path.exists(file_path):
             plot_window = PlotDialog(file_path)
             plot_window.show()
             self.open_windows.append(plot_window)
 
-        print("SDS view executed done.")
+        print("View executed done.")
 
-    def show_textedit_sdsio_outdir(self):
+    def choose_create_project_directory(self):
         """
-        Opens a folder selection dialog for the user to choose a directory.
+        Opens a dialog for the user to select or create a project directory.
+        """
+        open_default_fdir_path = "C:/"
+        open_default_fdir_name = "my_numl_project"
+
+        # Open QFileDialog to let the user select or create a directory
+        folderpath, _ = QFileDialog.getSaveFileName(
+            caption="Create Project Directory",
+            directory=os.path.join(open_default_fdir_path, open_default_fdir_name),
+            filter="Directories (*)"
+        )
+        if folderpath:
+            self.textEdit_outputDir_3.setPlainText(folderpath)
+            self.textEdit_outputDir_3.ensureCursorVisible()
+
+    def create_project_directory(self):
+        """
+        Creates a project directory at the specified path.
         """
 
+        project_create_path = self.textEdit_outputDir_3.toPlainText().strip()
+
+        try:
+            if project_create_path:
+                if not os.path.exists(project_create_path):
+                    os.makedirs(project_create_path)
+                    print(f"Project directory created: {project_create_path}")
+                    os.makedirs(os.path.join(project_create_path, "Data Collection"))
+                else:
+                    print(f"Project already exists: {project_create_path}")
+            else:
+                print("Error: No directory path provided.")
+
+        except Exception as e:
+            print(f"Error creating project directory: {e}")
+
+    def choose_project_directory(self):
+        """
+        Opens a folder selection dialog for the user to choose a project directory.
+        """
+        open_default_fdir_path = "C:/"
         folderpath = QFileDialog.getExistingDirectory(
-            directory='sds_out_dir')
+            directory = open_default_fdir_path)
         # show file path in textEdit
-        self.textEdit_outputDir_2.setPlainText(folderpath)
-        self.textEdit_outputDir_2.ensureCursorVisible()
+        self.textEdit_outputDir_4.setPlainText(folderpath)
+        self.textEdit_outputDir_4.ensureCursorVisible()
+
+        # Get the path from textEdit_outputDir_3
+        folder_path = self.textEdit_outputDir_4.toPlainText().strip()
+
+        if os.path.exists(folder_path):
+            self.my_project_path = folder_path
+            folder_name = os.path.basename(folder_path)
+            max_length = 20  # Maximum characters per line
+            if len(folder_name) > max_length:
+                folder_name = '\n'.join(folder_name[i:i+max_length] for i in range(0, len(folder_name), max_length))
+
+            # update tree widget
+            self.treeWidget.topLevelItem(1).setText(0, ('- ' + folder_name))
+
+            # find the newest label folder in Data Collection if my_project isn't empty for auto loading
+            newest_label_folder = self.find_newest_folder(str(Path(self.my_project_path) / "Data Collection"))
+            self.newest_collection_path = str(Path(self.my_project_path) / "Data Collection" / newest_label_folder) if newest_label_folder else ""
+
+        else:
+            self.treeWidget.topLevelItem(1).setText(0, "- No project selected")
+
+    def open_directory_from_textedit(self, text_edit, if_dir):
+        """
+        Opens the directory specified in the given QTextEdit widget.
+        """
+        if if_dir:
+            folder_path = text_edit.toPlainText().strip()
+        else:
+            folder_path = str(Path(text_edit.toPlainText().strip()).parent)
+
+        if not os.path.isdir(folder_path):
+            print(f"Error: The path '{folder_path}' is not a valid directory.")
+            return
+
+        if sys.platform == "win32":
+            os.startfile(folder_path)
+        elif sys.platform == "darwin":
+            os.system(f"open \"{folder_path}\"")
+        else:
+            os.system(f"xdg-open \"{folder_path}\"")
 
     def populate_deployed_project_type(self):
         """
@@ -520,19 +719,19 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         """
         # Example: Disable other widgets if a specific item is selected
         if selected_item == "Image":
-            self.comboBox_serverType_2.setDisabled(True)
-            self.lineEdit.setDisabled(True)
-            self.lineEdit_2.setDisabled(True)
-            self.pushButton_outputDir_2.setDisabled(True)
-            self.textEdit_outputDir_2.setDisabled(True)
-            self.pushButton_sdsioServer_2.setDisabled(True)
+            self.stackedWidget_recording_child.setCurrentWidget(self.page_img)
+            #self.comboBox_serverType_2.setDisabled(True)
+            #self.lineEdit.setDisabled(True)
+            #self.lineEdit_2.setDisabled(True)
+            #self.textEdit_outputDir_2.setDisabled(True)
+            #self.pushButton_sdsioServer_2.setDisabled(True)
         else:
-            self.comboBox_serverType_2.setDisabled(False)
-            self.lineEdit.setDisabled(False)
-            self.lineEdit_2.setDisabled(False)
-            self.pushButton_outputDir_2.setDisabled(False)
-            self.textEdit_outputDir_2.setDisabled(False)
-            self.pushButton_sdsioServer_2.setDisabled(False)
+            self.stackedWidget_recording_child.setCurrentWidget(self.page_sds)
+            #self.comboBox_serverType_2.setDisabled(False)
+            #self.lineEdit.setDisabled(False)
+            #self.lineEdit_2.setDisabled(False)
+            #self.textEdit_outputDir_2.setDisabled(False)
+            #self.pushButton_sdsioServer_2.setDisabled(False)
 
     def execute_sds_flash_fw(self):
         """
@@ -579,30 +778,47 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         """
         Executes the SDSIO server with the specified configuration parameters.
         """
-        server_type = self.comboBox_serverType_2.currentText()
-        serial_port = self.lineEdit.text()
-        baudrate = self.lineEdit_2.text()
-        out_dir = self.textEdit_outputDir_2.toPlainText()
-        if not server_type or not serial_port or not baudrate or not out_dir:
-            print("Error: Missing server configuration parameters.")
+        if not os.path.exists(self.my_project_path):
+            print(f"Error: No project path set. {self.my_project_path}")
+            print("Please select or create a project first.")
             return
-        print("Executing SDSIO server")
 
-        try:
-            self.thread_a.run = sdsio_server.start([server_type, '-p', serial_port, '--baudrate', baudrate, '--outdir', out_dir])       # 設定該執行緒執行 a()
-            self.thread_a.start()       # 啟動執行緒
-        except RuntimeError as e:
-            # Handle the error gracefully
-            print(f"Error in thread: {e}")
-            self.thread_a.quit()  # Ensure the thread is stopped
+        # Get output directory from textEdit and project path
+        label_dir = self.textEdit_outputDir_2.toPlainText()
+        self.newest_collection_path = str(Path(self.my_project_path) / "Data Collection" / label_dir)
+        print(self.newest_collection_path)
+        # create output directory if not exist
+        os.makedirs(self.newest_collection_path, exist_ok=True)
+
+        if os.path.exists(self.newest_collection_path):
+            server_type = self.comboBox_serverType_2.currentText()
+            serial_port = self.lineEdit.text()
+            baudrate = self.lineEdit_2.text()
+            if not server_type or not serial_port or not baudrate or not self.newest_collection_path:
+                print("Error: Missing server configuration parameters.")
+                return
+            print("Executing SDSIO server")
+
+            try:
+                self.thread_a.run = sdsio_server.start([server_type, '-p', serial_port, '--baudrate', baudrate, '--outdir', str(self.newest_collection_path)])       # 設定該執行緒執行 a()
+                self.thread_a.start()       # 啟動執行緒
+            except RuntimeError as e:
+                # Handle the error gracefully
+                print(f"Error in thread: {e}")
+                self.thread_a.quit()  # Ensure the thread is stopped
+        else:
+            print(f"Error: No out dir: {self.newest_collection_path}")
+            return
 
     def show_textedit_convert_sdsfile(self):
         """
         Opens a file dialog to select an SDS file and displays the selected file's path 
         """
+        default_dir_path = self.newest_collection_path
+        default_dir_path = str(default_dir_path) if os.path.exists(default_dir_path) else 'sds_out_dir'
         # filepath , filetype
         filepath , _ = QFileDialog.getOpenFileName(
-            directory='sds_out_dir', filter='*.sds')
+            directory=default_dir_path, filter='*.sds')
         # show file path in textEdit
         self.textEdit_10_sdsF_2.setPlainText(filepath)
         self.textEdit_10_sdsF_2.ensureCursorVisible()
@@ -612,6 +828,9 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         Opens a file dialog to save a file with a specific format based on the selected server type 
         and displays the selected file path in a text edit widget.
         """
+        default_dir_path = self.newest_collection_path
+        default_dir_path = str(default_dir_path) if os.path.exists(default_dir_path) else 'sds_out_dir'
+
         openfile_format = "Text Files (*.txt)"
         if self.comboBox_serverType_convertFormat_2.currentText() == "simple_csv":
             openfile_format = "CSV Files (*.csv)"
@@ -621,7 +840,7 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         filepath, _ = QFileDialog.getSaveFileName(
             self,
             "Save File As",
-            "",  # Default directory
+            default_dir_path,  # Default directory
             f"{openfile_format};;All Files (*)"
         )
         # show file path in textEdit
@@ -748,14 +967,14 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         """
         print("Import Nuvoton tflu deployment ...")
         self.numl_tool_lazy_import()
-        numl_type = self.comboBox_3.currentText()
+        numl_type = "Generate project" # numl_tool only support "Generate project" now
         tflite_model = self.textEdit_10.toPlainText()
         board = self.comboBox_4.currentText()
-        out_proj_path = self.textEdit_8.toPlainText()
+        out_proj_path = self.my_project_path
         proj_type = self.comboBox_5.currentText()
         app_type = self.comboBox_6.currentText()
         arena_size = self.lineEdit_5.text()
-        if not numl_type or not tflite_model or not out_proj_path:
+        if not numl_type or not tflite_model or not out_proj_path or not os.path.exists(out_proj_path):
             print("Error: Missing NuML_TFLM_Tool configuration parameters.")
             return
 
@@ -788,14 +1007,14 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         """
         print("Import Edge Impulse deployment ...")
         self.numl_tool_lazy_import()
-        numl_type = self.comboBox_11.currentText()
+        numl_type = "Generate project" # numl_tool only support "Generate project" now
         eisdk_path = self.textEdit_12.toPlainText()
         board = self.comboBox_12.currentText()
-        out_proj_path = self.textEdit_13.toPlainText()
+        out_proj_path = self.my_project_path
         app_type = self.comboBox_14.currentText()
         test_data_label = self.lineEdit_6.text()
-        if not eisdk_path or not out_proj_path:
-            print("Error: Missing Edge Impulse SDK dir path or output path.")
+        if not eisdk_path or not out_proj_path or not os.path.exists(out_proj_path):
+            print("Error: Missing Edge Impulse SDK dir path or output project path.")
             return
 
         for application_item in ei_deployed_application_list:
@@ -820,10 +1039,11 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         """
         Opens a dialog for the user to select a folder and updates the textEdit widget
         """
+        default_dir_path = str(Path(self.my_project_path) / "Data Collection")
         folderpath = QFileDialog.getExistingDirectory(
             self,
             "Select Folder",
-            ".",  # Default directory set to C:/
+            default_dir_path,
             QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
         )
         # show folder path in textEdit
@@ -866,7 +1086,16 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         Opens or brings to the foreground the webcam capture window.
         """
         if self.webcam_window is None or not self.webcam_window.isVisible():
-            self.webcam_window = WebcamWindow()
+            # pass the output dir path to WebcamWindow
+            label_dir = self.textEdit_outputDir_5.toPlainText()
+            img_out_dir = str(Path(self.my_project_path) / "Data Collection" / label_dir) if os.path.exists(self.my_project_path) else r"sds_out_dir/images"
+            os.makedirs(img_out_dir, exist_ok=True)
+
+            # create webcam window and its app
+            self.webcam_window = WebcamWindow(img_out_dir)
+
+            # connect the Raw_image_collection sihnal to capture_image slot
+            self.pushButton_sdsioServer_5.clicked.connect(self.webcam_window.capture_image)
             self.webcam_window.show()
         else:
             self.webcam_window.raise_()
