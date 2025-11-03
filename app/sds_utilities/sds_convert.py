@@ -261,7 +261,8 @@ def write_SDS_SimpleCSV(args, data, meta_data, sensor_frequency):
     normalize = args.normalize
     csv_start_timestamp = args.start_timestamp
     csv_stop_timestamp = args.stop_timestamp
-    use_meta_freq = args.ei_export
+    # use_meta_freq = args.ei_export
+    use_meta_freq = True # Force to use metadata frequency for simple CSV export (Fix timestamp)
 
     # Automatically generate new column for each sensor channel
     csv_header = ['timestamp']

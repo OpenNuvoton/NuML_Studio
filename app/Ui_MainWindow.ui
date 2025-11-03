@@ -359,7 +359,7 @@ border-radius: 0px;
 border-color: rgb(200, 200, 200);</string>
                       </property>
                       <property name="text">
-                       <string>Choose</string>
+                       <string>Select..</string>
                       </property>
                      </widget>
                     </item>
@@ -508,7 +508,7 @@ border-radius: 0px;
 border-color: rgb(200, 200, 200);</string>
                       </property>
                       <property name="text">
-                       <string>Choose</string>
+                       <string>Select..</string>
                       </property>
                      </widget>
                     </item>
@@ -1317,7 +1317,7 @@ color: rgb(255, 255, 255);</string>
                   </font>
                  </property>
                  <property name="text">
-                  <string>View Raw Data</string>
+                  <string>Preview Raw Data</string>
                  </property>
                 </widget>
                </item>
@@ -1331,7 +1331,7 @@ color: rgb(255, 255, 255);</string>
                   </font>
                  </property>
                  <property name="text">
-                  <string>Tip: Review audio and G-sensor raw data using time-domain </string>
+                  <string/>
                  </property>
                 </widget>
                </item>
@@ -1367,7 +1367,7 @@ border-radius: 10px;</string>
                      <string notr="true"/>
                     </property>
                     <property name="text">
-                     <string>YAML Description File</string>
+                     <string>YAML File</string>
                     </property>
                     <property name="wordWrap">
                      <bool>true</bool>
@@ -1395,7 +1395,7 @@ border-radius: 0px;
 border-color: rgb(200, 200, 200);</string>
                     </property>
                     <property name="text">
-                     <string>Choose</string>
+                     <string>Select..</string>
                     </property>
                    </widget>
                   </item>
@@ -1468,7 +1468,7 @@ border-radius: 10px;</string>
                      <number>1</number>
                     </property>
                     <property name="text">
-                     <string>Input SDS Data Recording File</string>
+                     <string>SDS File</string>
                     </property>
                     <property name="wordWrap">
                      <bool>true</bool>
@@ -1496,7 +1496,7 @@ border-radius: 0px;
 border-color: rgb(200, 200, 200);</string>
                     </property>
                     <property name="text">
-                     <string>Choose</string>
+                     <string>Select..</string>
                     </property>
                    </widget>
                   </item>
@@ -1576,7 +1576,7 @@ color: rgb(255, 255, 255);</string>
                     </font>
                    </property>
                    <property name="text">
-                    <string>Output (Converting SDS Data)</string>
+                    <string>Convert SDS File</string>
                    </property>
                   </widget>
                  </item>
@@ -1691,7 +1691,7 @@ border-radius: 10px;</string>
                        </font>
                       </property>
                       <property name="text">
-                       <string>Edge Impulse Format &amp; Export</string>
+                       <string>Export to EdgeImpulse</string>
                       </property>
                       <property name="wordWrap">
                        <bool>true</bool>
@@ -1795,7 +1795,7 @@ border-radius: 10px;</string>
                        <number>1</number>
                       </property>
                       <property name="text">
-                       <string>Input SDS Data Recording File</string>
+                       <string>From SDS File</string>
                       </property>
                       <property name="wordWrap">
                        <bool>true</bool>
@@ -1821,7 +1821,7 @@ border-radius: 0px;
 border-color: rgb(200, 200, 200);</string>
                       </property>
                       <property name="text">
-                       <string>Choose</string>
+                       <string>Select..</string>
                       </property>
                      </widget>
                     </item>
@@ -1955,7 +1955,7 @@ border-radius: 0px;
 border-color: rgb(200, 200, 200);</string>
                       </property>
                       <property name="text">
-                       <string>Set Output File Name</string>
+                       <string>Select..</string>
                       </property>
                      </widget>
                     </item>
@@ -2038,7 +2038,7 @@ border-radius: 0px;
 border-color: rgb(200, 200, 200);</string>
                       </property>
                       <property name="text">
-                       <string>Choose</string>
+                       <string>Select..</string>
                       </property>
                      </widget>
                     </item>
@@ -2213,7 +2213,7 @@ border-radius: 10px;
 color: rgb(255, 255, 255);</string>
                    </property>
                    <property name="text">
-                    <string>Execute</string>
+                    <string>Convert</string>
                    </property>
                   </widget>
                  </item>
@@ -2307,7 +2307,7 @@ border-radius: 0px;
 border-color: rgb(200, 200, 200);</string>
                       </property>
                       <property name="text">
-                       <string>Choose</string>
+                       <string>Select..</string>
                       </property>
                      </widget>
                     </item>
@@ -2380,7 +2380,7 @@ border-radius: 10px;</string>
                        </font>
                       </property>
                       <property name="text">
-                       <string>Category</string>
+                       <string>Dataset for Training or Testing</string>
                       </property>
                      </widget>
                     </item>
@@ -2638,7 +2638,7 @@ color: rgb(255, 255, 255);</string>
            <item>
             <widget class="QStackedWidget" name="stackedWidget_deployment">
              <property name="currentIndex">
-              <number>1</number>
+              <number>0</number>
              </property>
              <widget class="QWidget" name="page">
               <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -2745,7 +2745,7 @@ border-radius: 0px;
 border-color: rgb(200, 200, 200);</string>
                       </property>
                       <property name="text">
-                       <string>Choose</string>
+                       <string>Select..</string>
                       </property>
                      </widget>
                     </item>
@@ -2975,7 +2975,7 @@ border-radius: 10px;</string>
                        </font>
                       </property>
                       <property name="text">
-                       <string>Application</string>
+                       <string>Application Type</string>
                       </property>
                       <property name="wordWrap">
                        <bool>true</bool>
@@ -3238,7 +3238,7 @@ border-radius: 0px;
 border-color: rgb(200, 200, 200);</string>
                       </property>
                       <property name="text">
-                       <string>Choose</string>
+                       <string>Select..</string>
                       </property>
                      </widget>
                     </item>
@@ -3317,7 +3317,7 @@ border-radius: 10px;</string>
                        </font>
                       </property>
                       <property name="text">
-                       <string>Board</string>
+                       <string>Evaluation Board</string>
                       </property>
                      </widget>
                     </item>
@@ -3395,7 +3395,7 @@ border-radius: 10px;</string>
                        </font>
                       </property>
                       <property name="text">
-                       <string>Application</string>
+                       <string>Application Type</string>
                       </property>
                       <property name="wordWrap">
                        <bool>true</bool>
