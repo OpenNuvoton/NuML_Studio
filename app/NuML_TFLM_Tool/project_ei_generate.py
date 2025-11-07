@@ -28,7 +28,7 @@ board_list = [
 
 ei_proj_list = ['ML_M55M1_SampleCode',
             "https://github.com/OpenNuvoton/ML_M55M1_SampleCode.git",
-            "M55M1BSP-3.01.002" # This is the used BSP version, it also the dir name in the SDS git repo
+            "M55M1BSP-3.01.003" # This is the used BSP version, it also the dir name in the SDS git repo
 ]
 
 application = {

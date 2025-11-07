@@ -210,7 +210,7 @@ class KwsEICodegen:
         inputdata_file_tmp_path = str(Path(template_path).parent / "generic_ei_codegen") # use generic_ei_codegen's inputdata template
 
         if self.ei_c_model_fname is None:
-            print(f"EI compiled model file name is None, unable to generate code : {self.project}")
+            print(f"EI model file name is None, unable to generate code : {self.project}")
             return 'unable_generate'
 
         # Generate InputFiles.hpp file
@@ -233,23 +233,43 @@ class KwsEICodegen:
         if self.update_proj_files():
             return 'unable_generate'
 
-        # Update compiled EI model file
-        if self.update_compiled_model_files():
-            return 'unable_generate'
+        if 'compiled' in self.ei_c_model_fname:  # if the ei_learn model is compiled (the compiled model cpp file is not empty)
+            # Update compiled EI model file
+            if self.update_compiled_model_files():
+                return 'unable_generate'
 
-        # Generate main.cpp file
-        main_file_path = os.path.join(self.project, 'main.cpp')
-        main_temp_file_path = os.path.join(template_path, 'main_cpp_tmpl.jinja2')
-        print(f'Gen file Path {main_file_path}')
-        print(f'Template Path {main_temp_file_path}')
+            # Generate main.cpp file
+            main_file_path = os.path.join(self.project, 'main.cpp')
+            main_temp_file_path = os.path.join(template_path, 'main_cpp_tmpl.jinja2')
+            print(f'Gen file Path {main_file_path}')
+            print(f'Template Path {main_temp_file_path}')
 
-        try:
-            gen_file = open(main_file_path, "w", encoding="utf-8")
-        except OSError:
-            print(f"Could not open {main_file_path} file")
-            return 'unable_generate'
-        with gen_file:
-            codegen = MainCCodegen()
-            codegen.code_gen(gen_file, main_temp_file_path, self.tensor_arena_size)
+            try:
+                gen_file = open(main_file_path, "w", encoding="utf-8")
+            except OSError:
+                print(f"Could not open {main_file_path} file")
+                return 'unable_generate'
+            with gen_file:
+                codegen = MainCCodegen()
+                codegen.code_gen(gen_file, main_temp_file_path, self.tensor_arena_size)
+        else:
+            print(f"Skip update_compiled_model_files bcs EI model is not compiled model: {self.ei_c_model_fname}")
+
+            # Generate main.cpp file
+            main_file_path = os.path.join(self.project, 'main.cpp')
+            main_temp_file_path = os.path.join(template_path, 'main_cpp_tmpl.jinja2')
+            print(f'Gen file Path {main_file_path}')
+            print(f'Template Path {main_temp_file_path}')
+
+            try:
+                gen_file = open(main_file_path, "w", encoding="utf-8")
+            except OSError:
+                print(f"Could not open {main_file_path} file")
+                return 'unable_generate'
+            with gen_file:
+                codegen = MainCCodegen()
+                # Use the default define size in model-parameters/model_metadata.h as arena size when the model is not compiled
+                codegen.code_gen(gen_file, main_temp_file_path, "EI_CLASSIFIER_TFLITE_LARGEST_ARENA_SIZE")
+
 
         return 'success_generate'
