@@ -92,7 +92,8 @@ def pull_ei_representative_data(api_key, raw_sample_count, specify_label = None,
             if sample.filename.endswith(('.png', '.jpg', '.jpeg')):  # Image, not implemented/tested on C++ fw yet
                 sample.data.seek(0)
                 img = Image.open(sample.data)
-                img = img.convert("RGB").resize((96, 96))
+                img_size = raw_sample_count ** 0.5
+                img = img.convert("RGB").resize((int(img_size), int(img_size)))
                 img_np = np.array(img, dtype=np.uint8)
 
                 if DEBUG_LOG:
