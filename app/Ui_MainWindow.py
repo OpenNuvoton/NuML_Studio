@@ -15,7 +15,7 @@ class Ui_NuMLTool(object):
     def setupUi(self, NuMLTool):
         NuMLTool.setObjectName("NuMLTool")
         NuMLTool.resize(1920, 1100)
-        NuMLTool.setMinimumSize(QtCore.QSize(1920, 1050))
+        NuMLTool.setMinimumSize(QtCore.QSize(1024, 576))
         self.centralwidget = QtWidgets.QWidget(NuMLTool)
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayout_18 = QtWidgets.QHBoxLayout(self.centralwidget)
