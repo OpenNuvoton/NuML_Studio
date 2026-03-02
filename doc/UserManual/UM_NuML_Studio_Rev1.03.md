@@ -658,7 +658,7 @@ deployment package is available at:
 
 <div custom-style="Normal - Style Left  2 ch">
 
-[<span custom-style="Hyperlink">https://github.com/OpenNuvoton/NuML_Studio/blob/main/doc/QuickStart/QuickStart-EIProject.md</span>](https://github.com/OpenNuvoton/NuML_Studio/blob/main/doc/QuickStart-EIProject.md)
+[<span custom-style="Hyperlink">https://github.com/OpenNuvoton/NuML_Studio/blob/main/doc/QuickStart/QuickStart-EIProject.md</span>](https://github.com/OpenNuvoton/NuML_Studio/blob/main/doc/QuickStart/QuickStart-EIProject.md)
 
 </div>
 
