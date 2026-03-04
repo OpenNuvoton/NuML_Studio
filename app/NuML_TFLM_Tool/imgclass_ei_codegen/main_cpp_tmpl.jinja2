@@ -8,14 +8,16 @@
  ******************************************************************************/
 #include "BoardInit.hpp"      /* Board initialisation */
 
+#include "imlib.h"          /* Image processing */
+#include "framebuffer.h"
+
 #undef PI /* PI macro conflict with CMSIS/DSP */
 #include "NuMicro.h"
 
 #include "ModelFileReader.h"
 #include "ff.h"
 
-#include "imlib.h"          /* Image processing */
-#include "framebuffer.h"
+
 
 #include "edge-impulse-sdk/classifier/ei_run_classifier.h"    /* EI SDK */
 #include "export_tensor_arena.h"
@@ -29,35 +31,54 @@
 #define LOG_LEVEL             2
 #include "log_macros.h"      /* Logging macros (optional) */
 
-//#define __LOAD_MODEL_FROM_SD__
+//#define __PROFILE__
+
+#if !defined(__WITHOUT_LCD__)
+#define __USE_DISPLAY__
+#endif
+
+#define __USE_UVC__
+
+#if !defined(__WITHOUT_HYPERRAM__)
+{{define_SD_model_load}}
+#endif
+
+#undef ACTIVATION_BUF_SZ
+{{define_activation_buf_size}}
 
 #define MODEL_AT_HYPERRAM_ADDR 0x82400000
 
 #include "Profiler.hpp"
 #include "ImageSensor.h"
 
-//#define __PROFILE__
-#define __USE_UVC__    /* Real Time Test */
+#if defined (__USE_DISPLAY__)
+    #include "Display.h"
+#endif
 
-#if defined (__USE_UVC__)    /* Real Time Test */
+#if defined (__USE_UVC__)
     #include "UVC.h"
+#endif
+
+#define IMAGE_DISP_UPSCALE_FACTOR 1
+#if defined(LT7381_LCD_PANEL)
+#define FONT_DISP_UPSCALE_FACTOR 2
 #else
-    #include "InputFiles.hpp"    /* Test Data */
+#define FONT_DISP_UPSCALE_FACTOR 1
 #endif
 
 /* Image processing initiate function */
 //Used by omv library
 #if defined(__USE_UVC__)
-    //UVC only support QVGA, QQVGA
-    #define GLCD_WIDTH  320
-    #define GLCD_HEIGHT 240
+//UVC only support QVGA, QQVGA
+#define GLCD_WIDTH	320
+#define GLCD_HEIGHT	240
 #else
-    #define GLCD_WIDTH 320
-    #define GLCD_HEIGHT 240
+#define GLCD_WIDTH 320
+#define GLCD_HEIGHT 240
 #endif
 
 //RGB565
-#define IMAGE_FB_SIZE   (GLCD_WIDTH * GLCD_HEIGHT * 2)
+#define IMAGE_FB_SIZE	(GLCD_WIDTH * GLCD_HEIGHT * 2)
 
 #undef OMV_FB_SIZE
 #define OMV_FB_SIZE (IMAGE_FB_SIZE + 1024)
@@ -92,10 +113,20 @@ static void omv_init()
 
 static int32_t PrepareModelToHyperRAM(void)
 {
+#if !defined(__USE_SD1__)
 #define MODEL_FILE "0:\\nn_model.tflite"
-#define EACH_READ_SIZE 512
+#else
+#define MODEL_FILE "1:\\nn_model.tflite"
+#endif
 
-    TCHAR sd_path[] = { '0', ':', 0 };    /* SD drive started from 0 */
+#define EACH_READ_SIZE 512
+	
+#if !defined(__USE_SD1__)
+    TCHAR sd_path[] = { '0', ':', 0 };    /* SD drive started from 0 */	
+#else
+    TCHAR sd_path[] = { '1', ':', 0 };    /* SD drive started from 0 */	
+#endif
+
     f_chdrive(sd_path);          /* set default path */
 
     int32_t i32FileSize;
@@ -349,9 +380,15 @@ int main()
     omv_init();
     framebuffer_init_image(&frameBuffer);
 
+#if defined(__PROFILE__)
+    arm::app::Profiler profiler;
+    uint64_t u64StartCycle;
+    uint64_t u64EndCycle;
+    uint64_t u64CCAPStartCycle;
+    uint64_t u64CCAPEndCycle;
+#else
+    pmu_reset_counters();
 #endif
-
-
 
 #define EACH_PERF_SEC 5
     uint64_t u64PerfCycle;
@@ -360,21 +397,47 @@ int main()
     u64PerfCycle = pmu_get_systick_Count();
     u64PerfCycle += (SystemCoreClock * EACH_PERF_SEC);
 
-#if defined (__USE_UVC__)
     //Setup image senosr
     ImageSensor_Init();
     ImageSensor_Config(eIMAGE_FMT_RGB565, frameBuffer.w, frameBuffer.h, true);
 
+#if defined (__USE_DISPLAY__)
+    char szDisplayText[160];
+
+    Display_Init();
+    Display_ClearLCD(C_WHITE);
+#endif
+
+#if defined (__USE_UVC__)
     UVC_Init();
     HSUSBD_Start();
 #endif
 
-
-
     while (1)
     {
 
-#if defined (__USE_UVC__)
+#if defined (__USE_DISPLAY__)
+        //Display image on LCD
+        S_DISP_RECT sDispRect;
+
+        sDispRect.u32TopLeftX = 0;
+        sDispRect.u32TopLeftY = 0;
+		sDispRect.u32BottonRightX = ((frameBuffer.w * IMAGE_DISP_UPSCALE_FACTOR) - 1);
+		sDispRect.u32BottonRightY = ((frameBuffer.h * IMAGE_DISP_UPSCALE_FACTOR) - 1);
+
+#if defined(__PROFILE__)
+        u64StartCycle = pmu_get_systick_Count();
+#endif
+
+        Display_FillRect((uint16_t *)frameBuffer.data, &sDispRect, IMAGE_DISP_UPSCALE_FACTOR);
+
+#if defined(__PROFILE__)
+        u64EndCycle = pmu_get_systick_Count();
+        info("display image cycles %llu \n", (u64EndCycle - u64StartCycle));
+#endif
+
+#endif
+
         //resize framebuffer image to model input
         image_t resizeImg;
 
@@ -457,6 +520,11 @@ int main()
 #endif
 
 #if defined(__PROFILE__)
+        u64EndCycle = pmu_get_systick_Count();
+        info("quantize cycles %llu \n", (u64EndCycle - u64StartCycle));
+#endif
+
+#if defined(__PROFILE__)
         profiler.StartProfiling("Inference");
 #endif
 
@@ -505,7 +573,7 @@ int main()
         }
 
 
-#else
+
 
         // Perform DSP pre-processing and inference
         res = run_classifier(&signal, &result, false);

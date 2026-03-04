@@ -10,10 +10,16 @@
     <height>1100</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
   <property name="minimumSize">
    <size>
-    <width>1920</width>
-    <height>1050</height>
+    <width>1024</width>
+    <height>576</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -53,6 +59,15 @@ border-radius: 0px;</string>
        </item>
        <item>
         <widget class="QTreeWidget" name="treeWidget">
+         <property name="styleSheet">
+          <string notr="true">QTreeView::item{
+	height: 30px;
+     width: 30px;
+}</string>
+         </property>
+         <property name="uniformRowHeights">
+          <bool>false</bool>
+         </property>
          <attribute name="headerVisible">
           <bool>false</bool>
          </attribute>
@@ -95,11 +110,6 @@ border-radius: 0px;</string>
          </item>
          <item>
           <property name="text">
-           <string/>
-          </property>
-         </item>
-         <item>
-          <property name="text">
            <string>Data Collection</string>
           </property>
           <property name="font">
@@ -111,14 +121,6 @@ border-radius: 0px;</string>
           </property>
           <item>
            <property name="text">
-            <string/>
-           </property>
-           <property name="flags">
-            <set>NoItemFlags</set>
-           </property>
-          </item>
-          <item>
-           <property name="text">
             <string>- Recording</string>
            </property>
            <property name="font">
@@ -127,14 +129,6 @@ border-radius: 0px;</string>
              <weight>75</weight>
              <bold>true</bold>
             </font>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="flags">
-            <set>NoItemFlags</set>
            </property>
           </item>
           <item>
@@ -151,14 +145,6 @@ border-radius: 0px;</string>
           </item>
           <item>
            <property name="text">
-            <string/>
-           </property>
-           <property name="flags">
-            <set>NoItemFlags</set>
-           </property>
-          </item>
-          <item>
-           <property name="text">
             <string>- Output</string>
            </property>
            <property name="font">
@@ -167,14 +153,6 @@ border-radius: 0px;</string>
              <weight>75</weight>
              <bold>true</bold>
             </font>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="flags">
-            <set>NoItemFlags</set>
            </property>
           </item>
           <item>
@@ -192,14 +170,6 @@ border-radius: 0px;</string>
          </item>
          <item>
           <property name="text">
-           <string/>
-          </property>
-          <property name="flags">
-           <set>NoItemFlags</set>
-          </property>
-         </item>
-         <item>
-          <property name="text">
            <string>Deployment</string>
           </property>
           <property name="font">
@@ -211,18 +181,6 @@ border-radius: 0px;</string>
           </property>
           <item>
            <property name="text">
-            <string/>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>8</pointsize>
-             <weight>50</weight>
-             <bold>false</bold>
-            </font>
-           </property>
-          </item>
-          <item>
-           <property name="text">
             <string>- Nuvoton</string>
            </property>
            <property name="font">
@@ -231,11 +189,6 @@ border-radius: 0px;</string>
              <weight>75</weight>
              <bold>true</bold>
             </font>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string/>
            </property>
           </item>
           <item>
@@ -276,7 +229,7 @@ border-radius: 0px;</string>
        <item>
         <widget class="QStackedWidget" name="stackedWidget_Main">
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="page_Record_Data">
           <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="18,1,15">
@@ -350,7 +303,7 @@ border-radius: 10px;</string>
                       </property>
                       <property name="font">
                        <font>
-                        <pointsize>8</pointsize>
+                        <pointsize>10</pointsize>
                        </font>
                       </property>
                       <property name="styleSheet">
@@ -499,7 +452,7 @@ border-color: rgb(200, 200, 200);</string>
                       </property>
                       <property name="font">
                        <font>
-                        <pointsize>8</pointsize>
+                        <pointsize>10</pointsize>
                        </font>
                       </property>
                       <property name="styleSheet">
@@ -583,7 +536,7 @@ border-radius: 10px;</string>
                  </property>
                  <layout class="QGridLayout" name="gridLayout" columnstretch="2,3">
                   <item row="0" column="1">
-                   <widget class="QComboBox" name="comboBox_7">
+                   <widget class="QComboBox" name="comboBox_board_0">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                       <horstretch>1</horstretch>
@@ -607,6 +560,11 @@ border-color: rgb(200, 200, 200);</string>
                     <item>
                      <property name="text">
                       <string>NuMaker-M55M1</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>NuGestureAI-M55M1</string>
                      </property>
                     </item>
                    </widget>
@@ -833,7 +791,7 @@ border-radius: 10px;</string>
                           </property>
                           <property name="font">
                            <font>
-                            <pointsize>8</pointsize>
+                            <pointsize>10</pointsize>
                            </font>
                           </property>
                           <property name="styleSheet">
@@ -845,8 +803,8 @@ border-color: rgb(200, 200, 200);</string>
                            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;None&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;None&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                           </property>
                          </widget>
                         </item>
@@ -1238,7 +1196,7 @@ border-radius: 10px;</string>
                           </property>
                           <property name="font">
                            <font>
-                            <pointsize>8</pointsize>
+                            <pointsize>10</pointsize>
                            </font>
                           </property>
                           <property name="styleSheet">
@@ -1250,8 +1208,8 @@ border-color: rgb(200, 200, 200);</string>
                            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;None&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;None&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                           </property>
                          </widget>
                         </item>
@@ -1384,7 +1342,7 @@ border-radius: 10px;</string>
                     </property>
                     <property name="font">
                      <font>
-                      <pointsize>8</pointsize>
+                      <pointsize>10</pointsize>
                       <weight>50</weight>
                       <bold>false</bold>
                      </font>
@@ -1485,7 +1443,7 @@ border-radius: 10px;</string>
                     </property>
                     <property name="font">
                      <font>
-                      <pointsize>8</pointsize>
+                      <pointsize>10</pointsize>
                       <weight>50</weight>
                       <bold>false</bold>
                      </font>
@@ -1812,7 +1770,7 @@ border-radius: 10px;</string>
                       </property>
                       <property name="font">
                        <font>
-                        <pointsize>8</pointsize>
+                        <pointsize>10</pointsize>
                        </font>
                       </property>
                       <property name="styleSheet">
@@ -1946,7 +1904,7 @@ border-color: rgb(200, 200, 200);</string>
                       </property>
                       <property name="font">
                        <font>
-                        <pointsize>8</pointsize>
+                        <pointsize>10</pointsize>
                        </font>
                       </property>
                       <property name="styleSheet">
@@ -2029,7 +1987,7 @@ border-radius: 10px;</string>
                       </property>
                       <property name="font">
                        <font>
-                        <pointsize>8</pointsize>
+                        <pointsize>10</pointsize>
                        </font>
                       </property>
                       <property name="styleSheet">
@@ -2298,7 +2256,7 @@ border-radius: 10px;</string>
                       </property>
                       <property name="font">
                        <font>
-                        <pointsize>8</pointsize>
+                        <pointsize>10</pointsize>
                        </font>
                       </property>
                       <property name="styleSheet">
@@ -2736,7 +2694,7 @@ border-radius: 10px;</string>
                       </property>
                       <property name="font">
                        <font>
-                        <pointsize>8</pointsize>
+                        <pointsize>10</pointsize>
                        </font>
                       </property>
                       <property name="styleSheet">
@@ -2829,7 +2787,7 @@ border-radius: 10px;</string>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QComboBox" name="comboBox_4">
+                     <widget class="QComboBox" name="comboBox_board_1">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                         <horstretch>1</horstretch>
@@ -2849,6 +2807,11 @@ border-color: rgb(200, 200, 200);</string>
                       <item>
                        <property name="text">
                         <string>NuMaker-M55M1</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>NuGestureAI-M55M1</string>
                        </property>
                       </item>
                      </widget>
@@ -3229,7 +3192,7 @@ border-radius: 10px;</string>
                       </property>
                       <property name="font">
                        <font>
-                        <pointsize>8</pointsize>
+                        <pointsize>10</pointsize>
                        </font>
                       </property>
                       <property name="styleSheet">
@@ -3322,7 +3285,7 @@ border-radius: 10px;</string>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QComboBox" name="comboBox_12">
+                     <widget class="QComboBox" name="comboBox_board_2">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                         <horstretch>1</horstretch>
@@ -3342,6 +3305,11 @@ border-color: rgb(200, 200, 200);</string>
                       <item>
                        <property name="text">
                         <string>NuMaker-M55M1</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>NuGestureAI-M55M1</string>
                        </property>
                       </item>
                      </widget>

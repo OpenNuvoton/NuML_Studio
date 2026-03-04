@@ -1,0 +1,6 @@
+common:
+  includes:
+    - KWS_NuGesture\Pattern\include
+  sources:
+    ProfilerCounter:
+    - KWS_NuGesture\Pattern

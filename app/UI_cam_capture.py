@@ -98,7 +98,7 @@ class Ui_WebcamWindow(object):
         self.gridLayout = QtWidgets.QGridLayout()
         self.gridLayout.setObjectName("gridLayout")
         spacerItem4 = QtWidgets.QSpacerItem(400, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout.addItem(spacerItem4, 0, 0, 1, 1)
+        self.gridLayout.addItem(spacerItem4, 0, 2, 1, 1)
         self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -114,9 +114,29 @@ class Ui_WebcamWindow(object):
 "border-style: outset;\n"
 "border-radius: 10px;")
         self.pushButton_2.setObjectName("pushButton_2")
-        self.gridLayout.addWidget(self.pushButton_2, 0, 1, 1, 1)
-        self.gridLayout.setColumnStretch(0, 10)
+        self.gridLayout.addWidget(self.pushButton_2, 0, 3, 1, 1)
+        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.pushButton.sizePolicy().hasHeightForWidth())
+        self.pushButton.setSizePolicy(sizePolicy)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        font.setBold(True)
+        font.setWeight(75)
+        self.pushButton.setFont(font)
+        self.pushButton.setStyleSheet("background-color: #FFFFFF; \n"
+"border-style: outset;\n"
+"border-radius: 10px;")
+        self.pushButton.setObjectName("pushButton")
+        self.gridLayout.addWidget(self.pushButton, 0, 1, 1, 1)
+        spacerItem5 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout.addItem(spacerItem5, 0, 0, 1, 1)
+        self.gridLayout.setColumnStretch(0, 3)
         self.gridLayout.setColumnStretch(1, 3)
+        self.gridLayout.setColumnStretch(2, 6)
+        self.gridLayout.setColumnStretch(3, 3)
         self.verticalLayout.addLayout(self.gridLayout)
         self.verticalLayout.setStretch(0, 3)
         self.verticalLayout.setStretch(1, 6)
@@ -142,6 +162,7 @@ class Ui_WebcamWindow(object):
         self.pushButton_3.setText(_translate("WebcamWindow", "Start"))
         self.image_label.setText(_translate("WebcamWindow", "TextLabel"))
         self.pushButton_2.setText(_translate("WebcamWindow", "Close"))
+        self.pushButton.setText(_translate("WebcamWindow", "Capture"))
 
 
 if __name__ == "__main__":

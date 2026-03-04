@@ -14,16 +14,22 @@ class EiUploadDir():
     def __init__(self):
         # Edit to your Edge Impulse project API key
         self.my_ei_api_key = None
-        with open('API_Key.txt', 'r', encoding='utf-8') as file:
-            self.my_ei_api_key = file.readline().strip()
-
-        if not self.my_ei_api_key:
-            raise ValueError("API key is missing or empty in API_Key.txt")
+        try:
+            with open('API_Key.txt', 'r', encoding='utf-8') as file:
+                self.my_ei_api_key = file.readline().strip()
+        except FileNotFoundError:
+            print("Warning: API_Key.txt not found. Edge Impulse upload feature will not be available.")
+        except Exception as e:
+            print(f"Warning: Could not read API_Key.txt: {e}. Edge Impulse upload feature will not be available.")
 
     def upload_dir(self, directory, category="training", label=None):
         """
         Uploads all files in the specified directory to Edge Impulse.
         """
+        if not self.my_ei_api_key:
+            print("Error: API key is missing or empty. Please add your Edge Impulse API key to API_Key.txt")
+            return False
+
         if not os.path.isdir(directory):
             raise ValueError(f"Provided path '{directory}' is not a valid directory.")
 

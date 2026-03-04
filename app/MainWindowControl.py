@@ -24,12 +24,22 @@ from .sds_utilities import flash_fw
 #from .NuML_TFLM_Tool import numl_tool
 #from .NuML_TFLM_Tool.ei_upload import EiUploadDir
 
+#board list write in combobox:
+# 0: NuMaker-M55M1
+# 1: NuGestureAI-M55M1
+
 # Recording firmware list
 record_fw_list = [
     # combox's text, firmware binary filename, baudrate of uart recording
-    ['G-sensor (X, Y, Z)', 'SDS_Recorder_gsensor_uart_CMSIS.bin', 115200],
-    ['Audio (16kHZ)', 'SDS_Recorder_audio_uart_CMSIS.bin', 921600],
-    ['Image', 'HSUSBD_Video_CAM.bin', ' '],
+    [
+        ['G-sensor (X, Y, Z)', 'SDS_Recorder_gsensor_uart_CMSIS.bin', 115200],
+        ['Audio (16kHZ)', 'SDS_Recorder_audio_uart_CMSIS.bin', 921600],
+        ['Image', 'HSUSBD_Video_CAM.bin', ' '],
+    ],
+    [
+        ['Audio (16kHZ)', 'DMIC_WAVRecorder.bin', 921600],
+        ['Image', 'HSUSBD_Video_CAM.bin', ' '],
+    ],
 ]
 
 # Project type for Nuvoton deployment
@@ -42,10 +52,19 @@ deployed_project_type_list = [
 # Application type for Nuvoton deployment
 deployed_application_list = [
     # combox's text, application type
-    ['TFLite Inference Example', 'generic'],
-    ['Sds Gsensor example', 'gsensor_sds'],
-    ['Image Classification example', 'imgclass'],
-    ['Object Detection (YOLOv8n) example', 'objdet'],
+    [
+        ['TFLite Inference Example', 'generic'],
+        ['Sds Gsensor example', 'gsensor_sds'],
+        ['Image Classification example', 'imgclass'],
+        ['Object Detection (YOLOv8n) example', 'objdet'],
+        ['Object Detection (YOLOX) example', 'objdet_yolox'],
+    ],
+    [
+        ['TFLite Inference Example', 'generic'],
+        ['Image Classification example', 'imgclass'],
+        ['Object Detection (YOLOX) example', 'objdet_yolox'],
+        ['Keyword Spotting example', 'kws'],
+    ],
 ]
 
 # Application type for EI deployment
@@ -81,7 +100,6 @@ class Stream(QObject):
         Emits the provided text as a signal and refreshes the GUI.
         """
         self.newText.emit(str(text))
-        # 实时刷新界面
         QApplication.processEvents()
 
     def flush(self):
@@ -139,7 +157,7 @@ class WebcamWindow(QMainWindow):
 
         # Connect UI buttons
         self.ui.pushButton_3.clicked.connect(self.start_camera)
-        # self.ui.pushButton.clicked.connect(self.capture_image)
+        self.ui.pushButton.clicked.connect(self.capture_image)
         self.ui.pushButton_2.clicked.connect(self.close_app)
 
     def populate_cameras(self):
@@ -293,20 +311,6 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         # --- Set up the Collapsible Menu ---
         # Sidebar (TreeWidget)
         self.treeWidget.setHeaderHidden(True)
-        #self.treeWidget.setStyleSheet("""
-        #    QTreeWidget {
-        #        border: none;
-        #        background: white;
-        #        font-size: 14px;
-        #    }
-        #    QTreeWidget::item {
-        #        padding: 6px;
-        #    }
-        #    QTreeWidget::item:selected {
-        #        background: #d9d9d9;
-        #        border-radius: 4px;
-        #    }
-        #""")
         self.treeWidget.expandAll()
 
         # Default page
@@ -343,6 +347,9 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         self.populate_firmwares()
         self.pushButton_sdsioServer_3.clicked.connect(self.execute_sds_flash_fw)
         self.thread_flash_fw = QThread()
+        
+        self.comboBox_board_0.currentIndexChanged.connect(self.populate_firmwares)
+        self.comboBox_8.currentTextChanged.connect(self.on_firmware_selected_cam)
 
         # sdsio server connect
         self.pushButton_sdsioServer_2.clicked.connect(self.execute_sdsio_server)
@@ -358,7 +365,10 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
 
         # Deployment Nuvoton connect
         self.populate_deployed_project_type()
-        self.populate_deployed_application(deployed_application_list, self.comboBox_6)
+        index = self.comboBox_board_1.currentIndex()
+        self.populate_deployed_application(deployed_application_list[index], self.comboBox_6)
+        
+        self.comboBox_board_1.currentIndexChanged.connect(lambda: self.populate_deployed_application(deployed_application_list[self.comboBox_board_1.currentIndex()], self.comboBox_6))
         #self.show_textedit_out_path_default(self.textEdit_8, "gen_proj_ml")
         self.pushButton_11.clicked.connect(self.show_textedit_tflite_model)
         #self.pushButton_12.clicked.connect(lambda: self.show_textedit_out_path(self.textEdit_8))
@@ -693,6 +703,7 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         """
         Populates the comboBox_5 widget with a list of deployed project types.
         """
+        self.comboBox_5.clear()
         project_types = [item[0] for item in deployed_project_type_list]
         self.comboBox_5.addItems(project_types)
 
@@ -700,6 +711,7 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         """
         Populates the comboBox widget with a list of deployed applications.
         """
+        combo_box.clear()
         applications = [item[0] for item in input_application_list]
         combo_box.addItems(applications)
 
@@ -708,11 +720,29 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         Populates the firmware selection combo box with a list of firmware names
         and sets up a callback for when the selected firmware changes.
         """
-        fws = [item[0] for item in record_fw_list]
+        self.comboBox_8.clear()
+        index = self.comboBox_board_0.currentIndex();
+        fws = [item[0] for item in record_fw_list[index]]
         self.comboBox_8.addItems(fws)
-        # disable some widgets
-        self.comboBox_8.currentTextChanged.connect(self.on_firmware_selected_cam)
 
+    def page_sds_edit(self, b):
+        self.comboBox_serverType_2.setDisabled(b)
+        self.lineEdit.setDisabled(b)
+        self.lineEdit_2.setDisabled(b)
+        self.textEdit_outputDir_2.setDisabled(b)
+        self.pushButton_sdsioServer_2.setDisabled(b)
+        self.comboBox_serverType_2.setVisible(not b)
+        self.lineEdit.setVisible(not b)
+        self.lineEdit_2.setVisible(not b)
+        self.textEdit_outputDir_2.setVisible(not b)
+        self.pushButton_sdsioServer_2.setVisible(not b)
+        self.groupBox_8.setVisible(not b)
+        self.groupBox_7.setVisible(not b)
+        self.groupBox_6.setVisible(not b)
+        self.groupBox_9.setVisible(not b)
+        if b == True:
+            print("NuGestureAI do not support SDSIO, please use SD card to store data instead.")
+            print("Press button to record data. Length: 2 seconds.")
     def on_firmware_selected_cam(self, selected_item):
         """
         Handles the selection of a firmware option for the camera.
@@ -720,18 +750,13 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         # Example: Disable other widgets if a specific item is selected
         if selected_item == "Image":
             self.stackedWidget_recording_child.setCurrentWidget(self.page_img)
-            #self.comboBox_serverType_2.setDisabled(True)
-            #self.lineEdit.setDisabled(True)
-            #self.lineEdit_2.setDisabled(True)
-            #self.textEdit_outputDir_2.setDisabled(True)
-            #self.pushButton_sdsioServer_2.setDisabled(True)
         else:
             self.stackedWidget_recording_child.setCurrentWidget(self.page_sds)
-            #self.comboBox_serverType_2.setDisabled(False)
-            #self.lineEdit.setDisabled(False)
-            #self.lineEdit_2.setDisabled(False)
-            #self.textEdit_outputDir_2.setDisabled(False)
-            #self.pushButton_sdsioServer_2.setDisabled(False)
+            if selected_item == "Audio (16kHZ)" and self.comboBox_board_0.currentText() == "NuGestureAI-M55M1":
+                # for NuGestureAI-M55M1, hide sds server setting, since using other fw
+                self.page_sds_edit(True)    
+            else:
+                self.page_sds_edit(False)              
 
     def execute_sds_flash_fw(self):
         """
@@ -739,14 +764,15 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         """
         binary_file = None
 
-        board = self.comboBox_7.currentText()
+        board = self.comboBox_board_0.currentText()
         data_type = self.comboBox_8.currentText()
         if not board or not data_type:
             print("Error: Missing board or data_type parameters.")
             return
 
         # corrsponding data_type to firmware binary file
-        for fw_list_item in record_fw_list:
+        index = self.comboBox_board_0.currentIndex()
+        for fw_list_item in record_fw_list[index]:
             if data_type == fw_list_item[0]:
                 binary_file = fw_list_item[1]
 
@@ -969,7 +995,7 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         self.numl_tool_lazy_import()
         numl_type = "Generate project" # numl_tool only support "Generate project" now
         tflite_model = self.textEdit_10.toPlainText()
-        board = self.comboBox_4.currentText()
+        board = self.comboBox_board_1.currentText()
         out_proj_path = self.my_project_path
         proj_type = self.comboBox_5.currentText()
         app_type = self.comboBox_6.currentText()
@@ -983,7 +1009,8 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
                 proj_type = project_type_item[1]
                 break
 
-        for application_item in deployed_application_list:
+        index = self.comboBox_board_1.currentIndex()
+        for application_item in deployed_application_list[index]:
             if app_type == application_item[0]:
                 app_type = application_item[1]
                 break
@@ -1009,7 +1036,7 @@ class MyMainWindow(QMainWindow, Ui_NuMLTool):
         self.numl_tool_lazy_import()
         numl_type = "Generate project" # numl_tool only support "Generate project" now
         eisdk_path = self.textEdit_12.toPlainText()
-        board = self.comboBox_12.currentText()
+        board = self.comboBox_board_2.currentText()
         out_proj_path = self.my_project_path
         app_type = self.comboBox_14.currentText()
         test_data_label = self.lineEdit_6.text()

@@ -2,6 +2,7 @@
 import time
 import argparse
 import sys
+import traceback
 
 from .project_generate import add_generate_parser
 t2 = time.time()
@@ -67,7 +68,7 @@ def _main(argv):
         args.verbose = 3
 
     if args.version:
-        sys.stdout.write("v.0.01 \n")
+        sys.stdout.write("v.1.0.3 \n")
         return 0
     if not hasattr(args, "func"):
         # In case no valid subcommand is provided, show usage and exit

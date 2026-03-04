@@ -1,0 +1,6 @@
+common:
+  includes:
+    - KWS_NuGesture\NPU\include
+  sources:
+    NPU:
+    - KWS_NuGesture\NPU

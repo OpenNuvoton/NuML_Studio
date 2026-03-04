@@ -239,11 +239,18 @@ class sdsio_manager:
 
     def __write(self, sid, data):
         resp = bytearray()
+        cmd = 3
+        resp.extend(cmd.to_bytes(4, 'little'))
+        resp.extend(sid.to_bytes(4, 'little'))
         buf = self.write_buffers.get(sid)
         if not buf:
             print(f"Not opened for write: {sid}")
+            resp.extend((1).to_bytes(4, 'little'))  # error
+            resp.extend((0).to_bytes(4, 'little'))
             return resp
         buf.write(data)
+        resp.extend((0).to_bytes(4, 'little'))  # success
+        resp.extend((0).to_bytes(4, 'little'))
         return resp
 
     def __read(self, sid, size):
@@ -293,6 +300,7 @@ class sdsio_manager:
         arg = int.from_bytes(buf[8:12], 'little')
         sz = int.from_bytes(buf[12:16], 'little')
         data = buf[16:16+sz]
+        #print(f"cmd: {cmd}, sid: {sid}, arg: {arg}, sz: {sz}")
         if cmd == 1:
             return self.__open(arg, data.decode('utf-8').rstrip('\0'))
         elif cmd == 2:
@@ -436,7 +444,7 @@ class sdsio_server_serial:
                 buffer.extend(data)
             else:
                 continue
-
+            
             # Process complete messages from the buffer.
             # (Assuming that each message has at least a 16-byte header in which bytes [12:16] encode data_size.)
             while len(buffer) >= 16:

@@ -35,12 +35,17 @@ with open('API_Key.txt', 'r', encoding='utf-8') as file:
     EI_API_KEY = file.readline().strip()
 
 if not EI_API_KEY:
-    raise ValueError("API key is missing or empty in API_Key.txt")
+    #raise ValueError("API key is missing or empty in API_Key.txt")
+    print("Warning: API_Key.txt not found. Edge Impulse upload feature will not be available.")
 
 
 def ingestion_edgeimpulse(file):
     if isinstance(file, (str, Path)):
         files = [str(file)]
+
+    if not EI_API_KEY:
+        print("Error: API key is missing or empty. Please add your Edge Impulse API key to API_Key.txt")
+        return False
 
     try:
         res = requests.post(url='https://ingestion.edgeimpulse.com/api/training/files',

@@ -24,6 +24,7 @@ board_list = [
     # ['NuMaker-M467HJ', 'M467', 'm460BSP', 'git@github.com:OpenNuvoton/m460bsp.git'],
     # ['NuMaker-M467HJ', 'M467', 'm460bsp', 'https://github.com/OpenNuvoton/m460bsp.git'],
     ['NuMaker-M55M1', 'M55M1', 'M55M1BSP', 'https://github.com/OpenNuvoton/M55M1BSP.git'],
+    ['NuGestureAI-M55M1', 'M55M1', 'M55M1BSP', 'https://github.com/OpenNuvoton/M55M1BSP.git'],
 ]
 
 ei_proj_list = ['ML_M55M1_SampleCode',
@@ -33,17 +34,17 @@ ei_proj_list = ['ML_M55M1_SampleCode',
 
 application = {
     "generic"  : {
-                    "board": ['NuMaker-M55M1'],
+                    "board": ['NuMaker-M55M1', 'NuGestureAI-M55M1'],
                     "example_tmpl_dir": "NuEdgeWise",
                     "example_tmpl_proj": "ModelInference_EdgeImpulse"
                      },
     "kws"  : {
-                    "board": ['NuMaker-M55M1'],
+                    "board": ['NuMaker-M55M1', 'NuGestureAI-M55M1'],
                     "example_tmpl_dir": "NuEdgeWise",
                     "example_tmpl_proj": "KeywordSpotting_EdgeImpulse"
                      },
     "imgclass"  : {
-                    "board": ['NuMaker-M55M1'],
+                    "board": ['NuMaker-M55M1', 'NuGestureAI-M55M1'],
                     "example_tmpl_dir": "NuEdgeWise",
                     "example_tmpl_proj": "ImgClassInference_EdgeImpulse"
                      },
@@ -404,8 +405,12 @@ def ei_project_generate(args):
 
     for board_info in board_list:
         if board_info[0] == args.board:
-            board_found = True
-            download_bsp(board_info, templates_path)
+            for supported_board in application_param["board"]:
+                if supported_board == args.board:
+                    board_found = True
+                    download_bsp(board_info, templates_path)
+                    break
+        if board_found == True:
             break
 
     if board_found is False:
@@ -426,6 +431,8 @@ def ei_project_generate(args):
     # prepare project resource
     example_tmpl_dir = application_param["example_tmpl_dir"]
     example_tmpl_proj = application_param["example_tmpl_proj"]
+    if args.board == "NuGestureAI-M55M1":
+        example_tmpl_proj = example_tmpl_proj + "_" + args.board
     example_proj_list = ei_proj_list # edge impulse template project
     project_example_path, ei_c_model_fname = prepare_ei_proj_resource(board_info, project_path, templates_path, args.ei_sdk_path, example_tmpl_dir, example_tmpl_proj, example_proj_list)
     print(f"Gen Project Example Path: {project_example_path}")

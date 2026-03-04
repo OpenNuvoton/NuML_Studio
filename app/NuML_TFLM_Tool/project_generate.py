@@ -15,7 +15,9 @@ from tqdm import tqdm
 from .generic_codegen.generic_codegen import GenericCodegen
 from .imgclass_codegen.imgclass_codegen import ImgClassCodegen
 from .objdet_codegen.objdet_codegen import ObjDetCodegen
+from .objdet_yolox_codegen.objdet_yolox_codegen import ObjDetYoloXCodegen
 from .sdsgsensor_codegen.sdsgsensor_codegen import SdsGsensorCodegen
+from .kws_codegen.kws_codegen import KwsCodegen
 
 PROJECT_GEN_DIR_PREFIX = 'ProjGen_'
 
@@ -24,6 +26,7 @@ board_list = [
     # ['NuMaker-M467HJ', 'M467', 'm460BSP', 'git@github.com:OpenNuvoton/m460bsp.git'],
     # ['NuMaker-M467HJ', 'M467', 'm460bsp', 'https://github.com/OpenNuvoton/m460bsp.git'],
     ['NuMaker-M55M1', 'M55M1', 'M55M1BSP', 'https://github.com/OpenNuvoton/M55M1BSP.git'],
+    ['NuGestureAI-M55M1', 'M55M1', 'M55M1BSP', 'https://github.com/OpenNuvoton/M55M1BSP.git'],
 ]
 
 sds_list = ['ML_M55M1_CMSIS_SDS',
@@ -35,25 +38,35 @@ project_type_list = ['uvision5_armc6', 'make_gcc_arm', 'vscode']
 
 application = {
     "generic"   : {
-                    "board": ['NuMaker-M55M1'],
-                    "example_tmpl_dir": "generic_template",
-                    "example_tmpl_proj": "NN_ModelInference"
-                  },
+                    "board": ['NuMaker-M55M1', 'NuGestureAI-M55M1'],
+                        "example_tmpl_dir": "generic_template",
+                        "example_tmpl_proj": "NN_ModelInference"
+                    },
     "imgclass"  : {
+                    "board": ['NuMaker-M55M1', 'NuGestureAI-M55M1'],
+                        "example_tmpl_dir": "imgclass_template",
+                        "example_tmpl_proj": "NN_ImgClassInference"
+                    }, 
+    "objdet"    : {
                     "board": ['NuMaker-M55M1'],
-                    "example_tmpl_dir": "imgclass_template",
-                    "example_tmpl_proj": "NN_ImgClassInference"
-                  },
-    "objdet"  : {
-                    "board": ['NuMaker-M55M1'],
-                    "example_tmpl_dir": "objdet_template",
+                        "example_tmpl_dir": "objdet_template",
+                        "example_tmpl_proj": "NN_ObjDetInference"
+                    },
+    "objdet_yolox"    : {
+                    "board": ['NuMaker-M55M1', 'NuGestureAI-M55M1'],
+                    "example_tmpl_dir": "objdet_yolox_template",
                     "example_tmpl_proj": "NN_ObjDetInference"
-                  },
+                    },
     "gsensor_sds"  : {
                     "board": ['NuMaker-M55M1'],
-                    "example_tmpl_dir": "SDS", # This is from sds_list dir structure
-                    "example_tmpl_proj": "NN_ModelInference_SDS" # This is from sds_list dir structure
-                     },            
+                        "example_tmpl_dir": "SDS", # This is from sds_list dir structure
+                        "example_tmpl_proj": "NN_ModelInference_SDS" # This is from sds_list dir structure
+                    },
+    "kws"  : {
+                    "board": ['NuGestureAI-M55M1'],
+                        "example_tmpl_dir": "kws_template", 
+                        "example_tmpl_proj": "KWS_NuGesture"
+                    },
 }
 
 # git clone progress status
@@ -132,13 +145,13 @@ def vela_summary_parse(summary_file):
     return df.iloc[0,0]*1024, df.iloc[0,1]*1024
 
 # generate tflite cpp file
-def generate_model_cpp(output_path, tflite2cpp_dir_path, model_file):
+def generate_model_cpp(output_path, tflite2cpp_dir_path, model_file, namespace='nn'):
     cur_work_dir = os.getcwd()
     print(cur_work_dir)
     os.chdir(output_path)
     model2cpp_exe = os.path.join(tflite2cpp_dir_path, 'gen_model_cpp.exe')
     template_dir = os.path.join(tflite2cpp_dir_path, 'templates')
-    model2cpp_cmd = [model2cpp_exe, '--tflite_path', model_file, '--output_dir','.', '--template_dir', template_dir, '-ns', 'arm', '-ns', 'app', '-ns', 'nn']
+    model2cpp_cmd = [model2cpp_exe, '--tflite_path', model_file, '--output_dir','.', '--template_dir', template_dir, '-ns', 'arm', '-ns', 'app', '-ns', namespace]
     print(model2cpp_cmd)
 
     ret = subprocess.run(model2cpp_cmd)
@@ -183,8 +196,27 @@ def prepare_proj_resource(board_info, project_path, templates_path, vela_model_f
     bsp_thirdparty_ml_evk_dest_path = os.path.join(bsp_thirdparty_dest_path, 'ml-embedded-evaluation-kit')
     print('copy BSP ThirdParty ml-embedded-evaluation-kit ...')
     shutil.copytree(bsp_thirdparty_ml_evk_src_path, bsp_thirdparty_ml_evk_dest_path, dirs_exist_ok = True)
+    
+#    bsp_thirdparty_FreeRTOS_src_path = os.path.join(bsp_thirdparty_src_path, 'FreeRTOS')
+#    bsp_thirdparty_FreeRTOS_dest_path = os.path.join(bsp_thirdparty_dest_path, 'FreeRTOS')
+#    print('copy BSP ThirdParty FreeRTOS ...')
+#    shutil.copytree(bsp_thirdparty_FreeRTOS_src_path, bsp_thirdparty_FreeRTOS_dest_path, dirs_exist_ok = True)
+    
     # copy .cc to .cpp
     ml_evk_source_dir = os.path.join(bsp_thirdparty_ml_evk_dest_path, 'source', 'application', 'api', 'common', 'source')
+
+    # Loop through all files in the directory
+    for filename in os.listdir(ml_evk_source_dir):
+        if filename.endswith('.cc'):
+            # Construct full file path
+            old_file = os.path.join(ml_evk_source_dir, filename)
+            new_file = os.path.join(ml_evk_source_dir, filename.replace('.cc', '.cpp'))
+
+            # copy the file
+            shutil.copyfile(old_file, new_file)
+            print(f'copy {old_file} to {new_file}')
+            
+    ml_evk_source_dir = os.path.join(bsp_thirdparty_ml_evk_dest_path, 'source', 'application', 'api', 'use_case', 'kws', 'src')
 
     # Loop through all files in the directory
     for filename in os.listdir(ml_evk_source_dir):
@@ -416,7 +448,8 @@ def proj_gen(progen_path, project_type, project_dir_name):
 
     cur_work_dir = os.getcwd()
     os.chdir(progen_path)
-
+    print("progen_path")
+    print(os.getcwd())
     python_dir = os.path.dirname(sys.executable)
     #For embeded python
     embedded_py_path = os.path.join(python_dir, 'runtime', 'python.exe')
@@ -457,26 +490,32 @@ def proj_gen(progen_path, project_type, project_dir_name):
 def project_generate(args):
     print(f"project type is {args.project_type}")
     templates_path = args.templates_path
+    
     application_usage = args.application
-
     if not application_usage in application:
         print("applicaiton not found! using generic instead")
         application_usage = "generic"
-
+    
+    namespace = 'kws' if application_usage == 'kws' else 'nn'
+    
     application_param = application[application_usage]
 
     if templates_path == None:
         templates_path = os.path.join(os.path.dirname(__file__), 'templates')
 
     board_found = False
-
+    
     for board_info in board_list:
         if board_info[0] == args.board:
-            board_found = True
-            download_bsp(board_info, templates_path)
+            for supported_board in application_param["board"]:
+                if supported_board == args.board:
+                    board_found = True
+                    download_bsp(board_info, templates_path)
+                    break
+        if board_found == True:
             break
 
-    if board_found is False:
+    if board_found == False:
         print("board not support")
         return 'unable_generate'
 
@@ -509,7 +548,7 @@ def project_generate(args):
     # generate model cc file
     tflite2cpp_dir_path = os.path.join(os.path.dirname(__file__), '..', 'tflite2cpp')
     print(tflite2cpp_dir_path)
-    generate_model_cpp(args.output_path, tflite2cpp_dir_path, os.path.abspath(vela_model_file_path)) 
+    generate_model_cpp(args.output_path, tflite2cpp_dir_path, os.path.abspath(vela_model_file_path), namespace) 
     vela_model_cc_file = os.path.join(args.output_path, vela_model_basename + '_vela.tflite.cc')
     print(vela_model_cc_file)
 
@@ -522,15 +561,19 @@ def project_generate(args):
         project_example_path = prepare_proj_resource(board_info, project_path, templates_path, vela_model_file_path, vela_model_cc_file, example_tmpl_dir, example_tmpl_proj)
     print(project_example_path)
 
-    # Generate mode.hpp/cpp or main.cpp
+    # Generate model.hpp/cpp or main.cpp
     if application_usage == 'generic':
         codegen = GenericCodegen.from_args(vela_model_file_path, project_example_path, vela_summary_file_path, app='generic')
     elif application_usage == 'imgclass':
         codegen = ImgClassCodegen.from_args(vela_model_file_path, project_example_path, vela_summary_file_path, app='imagclass')
     elif application_usage == 'objdet':
         codegen = ObjDetCodegen.from_args(vela_model_file_path, project_example_path, vela_summary_file_path, app='objdet')
+    elif application_usage == 'objdet_yolox':
+        codegen = ObjDetYoloXCodegen.from_args(vela_model_file_path, project_example_path, vela_summary_file_path, app='objdet_yolox')
     elif application_usage == 'gsensor_sds':
         codegen = SdsGsensorCodegen.from_args(vela_model_file_path, project_example_path, vela_summary_file_path, app='gsensor_sds')
+    elif application_usage == 'kws':
+        codegen = KwsCodegen.from_args(vela_model_file_path, project_example_path, vela_summary_file_path, app='kws')
 
     codegen.code_gen()
 
@@ -545,6 +588,5 @@ def project_generate(args):
         progen_path = os.path.join(project_example_path, '..')
         proj_gen(progen_path, args.project_type, os.path.basename(project_example_path))
         print(f'Example project completed at {os.path.abspath(project_example_path)}')
-
     return project_example_path
     

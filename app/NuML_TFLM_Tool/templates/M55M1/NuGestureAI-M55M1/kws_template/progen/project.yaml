@@ -1,0 +1,43 @@
+modules:
+    Application: &module_Application
+        - tools/records/Application/Application.yaml
+    ArmMLApi: &module_ArmMLApi
+        - tools/records/ArmMLApi/ArmMLApi.yaml
+    CMSIS: &module_CMSIS
+        - tools/records/CMSIS/CMSIS.yaml
+    Device: &module_Device
+        - tools/records/Device/Device.yaml
+    Driver: &module_Driver
+        - tools/records/Driver/Driver.yaml
+    Lib: &module_Lib
+        - tools/records/Lib/Lib.yaml
+    Model: &module_Model
+        - tools/records/Model/Model.yaml
+    NPU: &module_NPU
+        - tools/records/NPU/NPU.yaml
+    Pattern: &module_Pattern
+        - tools/records/Pattern/Pattern.yaml
+    ProfilerCounter: &module_ProfilerCounter
+        - tools/records/ProfilerCounter/ProfilerCounter.yaml
+    toolchain_settings: &toolchain_settings
+        - tools/records/toolchain_settings/toolchain_settings.yaml
+
+projects:
+    KWS_NuGesture:
+        - *module_Application
+        - *module_ArmMLApi
+        - *module_CMSIS
+        - *module_Device
+        - *module_Driver
+        - *module_Lib
+        - *module_Model
+        - *module_NPU
+        - *module_Pattern
+        - *module_ProfilerCounter
+        - *toolchain_settings
+
+settings:
+    tools:
+        uvision:
+            template:
+                - tools/records/templates/Template.uvprojx

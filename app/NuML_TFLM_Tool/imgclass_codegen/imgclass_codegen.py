@@ -22,7 +22,7 @@ class ImgClassCodegen:
         print(f"project:{self.project}")
         for key, value in self.extra.items():
             print(f"extra param:{key}, {value}")
-
+                
         template_path = os.path.dirname(os.path.abspath(__file__))  # use explicit path
 
         #Generate MobileNetModel.hpp file

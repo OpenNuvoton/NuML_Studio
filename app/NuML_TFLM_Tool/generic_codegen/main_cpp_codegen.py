@@ -6,7 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 FLASH_SIZE_LIMIT = 1.4 * 1024000
 
 def add_activation_size_section(sram_usage, flash_usage):
-    activation_size = int(sram_usage * 1.4)
+    activation_size = int(sram_usage * 1.2) + 1024
     activation_size &= ~(1024 - 1)
     activation_size = max(activation_size, 1024 * 1)  # Ensure at least 2KB
     szWriteLine = '#define ACTIVATION_BUF_SZ (' + str(activation_size) + ')'

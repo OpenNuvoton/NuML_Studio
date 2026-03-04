@@ -1,0 +1,6 @@
+common:
+  includes:
+    - KWS_NuGesture\Device\include
+  sources:
+    Device:
+    - KWS_NuGesture\Device\DMICRecord\DMICRecord.c

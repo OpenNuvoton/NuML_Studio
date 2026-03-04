@@ -1,0 +1,6 @@
+common:
+  includes:
+    - KWS_NuGesture\Model\include
+  sources:
+    Model:
+    - KWS_NuGesture\Model
