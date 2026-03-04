@@ -20,20 +20,19 @@ This document explains how to build a TinyML project with Edge Impulse and NuML_
 1. Flash the data collection firmware
     - Select `Image`, click `Flash Firmware` and wait for completion.
         <p>
-        <img src="https://raw.githubusercontent.com/OpenNuvoton/NuML_Studio/master/img/flash_fw.png" alt="flash_fw.png" width="600">
+        <img src="media/flash_fw.png" alt="flash_fw.png" width="600">
         </p>
     - Click `Image Capture` to take and save images.
         <p>
-        <img src="https://raw.githubusercontent.com/OpenNuvoton/NuML_Studio/master/img/capture_image.png" alt="capture_image.png" width="600">
+        <img src="media/capture_image.png" alt="capture_image.png" width="600">
         </p>
-        
 
 1. Upload data to Edge Impulse
 
     - Copy your project API-Key from Edge Impulse `Dashboard`, `Keys` and paste it into `NuML_Studio_vX.X.X\API_key.txt`.
     - Use NuML_Studio to upload your collected data folder, or upload directly via Edge Impulse `Data acquisition` page.
         <p>
-        <img src="https://raw.githubusercontent.com/OpenNuvoton/NuML_Studio/master/img/upload_data.png" alt="upload_data.png" width="600">
+        <img src="media/upload_data.png" alt="upload_data.png" width="600">
         </p>
 
 ### Training by Edge Impulse
@@ -44,30 +43,29 @@ This document explains how to build a TinyML project with Edge Impulse and NuML_
     - Review and update labels if needed.
     - Split the collected data into training and testing datasets.
         <p>
-        <img src="https://raw.githubusercontent.com/OpenNuvoton/NuML_Studio/master/img/split_to_traintest.png" alt="split_to_traintest.png" width="600">
+        <img src="media/split_to_traintest.png" alt="split_to_traintest.png" width="600">
         </p>
-    
+
 1. Create Impulse
 
     - Go to the `Create Impulse` tab.
     - Configure your ML pipeline (preprocessing, learning block, classifier).
     - For Image input, set the `Resize mode` to **Squash**
         <p>
-        <img src="https://raw.githubusercontent.com/OpenNuvoton/NuML_Studio/master/img/Create_impulse.png" alt="Create_impulse.png" width="600">
+        <img src="media/Create_impulse.png" alt="Create_impulse.png" width="600">
         </p>
-        
+
 1. Set Parameters and generate Features
 
     - Go to the `Image` tab.
     - Set Parameters and click `Save parameters`.
         <p>
-        <img src="https://raw.githubusercontent.com/OpenNuvoton/NuML_Studio/master/img/Set_parameters.png" alt="Set_parameters.png" width="600">
+        <img src="media/Set_parameters.png" alt="Set_parameters.png" width="600">
         </p>
     - Then click `Generate features` to extract feature vectors from your dataset.
         <p>
-        <img src="https://raw.githubusercontent.com/OpenNuvoton/NuML_Studio/master/img/generate_features.png" alt="generate_features.png" width="600">
+        <img src="media/generate_features.png" alt="generate_features.png" width="600">
         </p>
-        
 
 1. Start Training
 
@@ -76,14 +74,14 @@ This document explains how to build a TinyML project with Edge Impulse and NuML_
     - Adjust training parameters (epochs, learning rate, validation split, etc.).
     - Click `Start training` to begin model training.
         <p>
-        <img src="https://raw.githubusercontent.com/OpenNuvoton/NuML_Studio/master/img/Training.png" alt="Training.png" width="600">
+        <img src="media/Training.png" alt="Training.png" width="600">
         </p>
 
 1. Retrain model
 
-    - Go to the `Retrain model` tab. 
+    - Go to the `Retrain model` tab.
         <p>
-        <img src="https://raw.githubusercontent.com/OpenNuvoton/NuML_Studio/master/img/Retrain_model.png" alt="Retrain_model.png" width="600">
+        <img src="media/Retrain_model.png" alt="Retrain_model.png" width="600">
         </p>
 
 1. Test the model
@@ -91,16 +89,17 @@ This document explains how to build a TinyML project with Edge Impulse and NuML_
     - Go to the  `Model testing` tab.
     - Please choose **Test Quantized model**. This will test the quantized model using all the test data.
         <p>
-        <img src="https://raw.githubusercontent.com/OpenNuvoton/NuML_Studio/master/img/testing.png" alt="testing.png" width="600">
-        </p>        
+        <img src="media/testing.png" alt="testing.png" width="600">
+        </p>
 
 ### Deployment
+
 1. Build the deployment model and SDK
 
     - Go to the `Deployment` tab on the Edge Impulse project page.
-    - Select **ethosu-U55 256 library** and build it. 
+    - Select **ethosu-U55 256 library** and build it.
         <p>
-        <img src="https://raw.githubusercontent.com/OpenNuvoton/NuML_Studio/master/img/Deployment.png" alt="Deployment.png" width="600">
+        <img src="media/Deployment.png" alt="Deployment.png" width="600">
         </p>
 
 1. Run inference firmware on NuMaker-M55M1
@@ -108,7 +107,6 @@ This document explains how to build a TinyML project with Edge Impulse and NuML_
     - After downloading and unzipping the SDK, use NuML-Studio to create the code project.
     - In NuML-Studio, select `- Deployment`, `- Edge Impulse`.
         <p>
-        <img src="https://raw.githubusercontent.com/OpenNuvoton/NuML_Studio/master/img/numl_studio_ei_deploy.png" alt="numl_studio_ei_deploy.png" width="600">
+        <img src="media/numl_studio_ei_deploy.png" alt="numl_studio_ei_deploy.png" width="600">
         </p>
-    - The final step is to open the Keil or VSCode CMSIS project generated by NuML-Studio, then build and flash the NuMaker-M55M1 ML firmware with your Edge Impulse model.       
-
+    - The final step is to open the Keil or VSCode CMSIS project generated by NuML-Studio, then build and flash the NuMaker-M55M1 ML firmware with your Edge Impulse model.
