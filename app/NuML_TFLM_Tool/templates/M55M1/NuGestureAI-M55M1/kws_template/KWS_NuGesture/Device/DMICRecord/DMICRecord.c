@@ -345,7 +345,7 @@ int32_t DMICRecord_Init(
     /* Initialise LPPDMA after DMA descriptors/buffers are prepared. */
     s_u32PingPongIdx = 0;
     LPPDMA_init();
-
+    DMICRecord_StartRec();
     return 0;
 
 init_fail:

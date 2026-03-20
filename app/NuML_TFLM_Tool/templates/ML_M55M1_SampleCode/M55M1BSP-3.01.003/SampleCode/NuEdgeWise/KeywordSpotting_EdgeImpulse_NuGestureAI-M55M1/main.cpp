@@ -85,7 +85,6 @@ int main()
 
     // Setup MPU configuration
     InitPreDefMPURegion(&mpuConfig[0], mpuConfig.size());
-		
 
     //Edge Impulse structure initial
     signal_t signal;            // Wrapper for raw input buffer
@@ -113,37 +112,37 @@ int main()
     uint64_t u64CCAPEndCycle;
 #else
     pmu_reset_counters();
-#endif		
+#endif
 
 
 #if defined(USE_DMIC)
-		// Assign callback function to fill buffer used for preprocessing/inference
-		signal.total_length = EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE;
+    // Assign callback function to fill buffer used for preprocessing/inference
+    signal.total_length = EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE;
     signal.get_data = &get_signal_data_from_dmic;
-		
-#if defined(USE_PERF_CALIB)			
-		run_classifier_init();
-#endif		
-		
-#define AUDIO_SAMPLE_BLOCK  4		
+
+#if defined(USE_PERF_CALIB)
+    run_classifier_init();
+#endif
+
+#define AUDIO_SAMPLE_BLOCK  4
 #define AUDIO_CHANNEL       1
 const auto audioSlidingSamples = EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE;		
 
-		int32_t ret;
-		ret = DMICRecord_Init(EI_CLASSIFIER_FREQUENCY, AUDIO_CHANNEL, audioSlidingSamples, AUDIO_SAMPLE_BLOCK);
+    int32_t ret;
+    ret = DMICRecord_Init(EI_CLASSIFIER_FREQUENCY, AUDIO_CHANNEL, audioSlidingSamples, AUDIO_SAMPLE_BLOCK);
     if (ret)
     {
         printf_err("Unable init DMIC record error(%d)\n", ret);
         return 4;
-    }		
-		
+    }
+
 #else
-		// Assign callback function to fill buffer used for preprocessing/inference
+    // Assign callback function to fill buffer used for preprocessing/inference
     signal.total_length = EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE;
     signal.get_data = &get_signal_data;
     //numpy::signal_from_buffer(&input_buf[0], EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE, &signal);
     
-		// Perform DSP pre-processing and inference		
+    // Perform DSP pre-processing and inference
     printf("\r\n");
     printf("run_classifier\r\n");
     res = run_classifier(&signal, &result, false);
@@ -151,28 +150,28 @@ const auto audioSlidingSamples = EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE;
         ei_printf("ERR: Failed to run classifier (%d)\n", res);
         return 1;
     }
-		
+
     // Print return code and how long it took to perform inference
     printf("run_classifier returned: %d\r\n", res);
     printf("Timing: DSP %d ms, inference %d ms, anomaly %d ms\r\n",
            result.timing.dsp,
            result.timing.classification,
            result.timing.anomaly);
-		
+
     printf("Predictions:\r\n");
 
     for (uint16_t i = 0; i < EI_CLASSIFIER_LABEL_COUNT; i++)
     {
         printf("  %s: ", ei_classifier_inferencing_categories[i]);
         printf("%.5f\r\n", result.classification[i].value);
-    }	
+    }
 
     // Print anomaly result (if it exists)
 #if EI_CLASSIFIER_HAS_ANOMALY == 1
     printf("Anomaly prediction: %.3f\r\n", result.anomaly);
 #endif
-		
-#endif	// defined(USE_DMIC)	
+
+#endif  // defined(USE_DMIC)	
 
 #define EACH_PERF_SEC 1
     uint64_t u64PerfCycle;
@@ -186,26 +185,26 @@ const auto audioSlidingSamples = EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE;
     {
 
 #if defined(USE_DMIC)
-			
-		DMICRecord_ReadSamples(audioSlidingBuf, audioSlidingSamples);
+
+        DMICRecord_ReadSamples(audioSlidingBuf, audioSlidingSamples);
 
         DMICRecord_UpdateReadSampleIndex(audioSlidingSamples);
-			
-			  signal.total_length = EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE;
+
+        signal.total_length = EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE;
         signal.get_data = &get_signal_data_from_dmic;
-			
+
 #if defined(__PROFILE__)
-			  u64StartCycle = pmu_get_systick_Count();
+        u64StartCycle = pmu_get_systick_Count();
         profiler.StartProfiling("Inference");
-#endif			
-			
-#if defined(USE_PERF_CALIB)			
-			  res = run_classifier_continuous(&signal, &result, false);
-#else			
-			  res = run_classifier(&signal, &result, false);
-#endif		
-			
-#else			
+#endif
+
+#if defined(USE_PERF_CALIB)
+        res = run_classifier_continuous(&signal, &result, false);
+#else
+        res = run_classifier(&signal, &result, false);
+#endif
+
+#else
         // Perform DSP pre-processing and inference
         res = run_classifier(&signal, &result, false);
 #endif
@@ -214,7 +213,7 @@ const auto audioSlidingSamples = EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE;
         profiler.StopProfiling();
 #endif
         
-			  if (res != EI_IMPULSE_OK) {
+        if (res != EI_IMPULSE_OK) {
             ei_printf("ERR: Failed to run classifier (%d)\n", res);
             return 1;
         }
@@ -243,10 +242,10 @@ const auto audioSlidingSamples = EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE;
 #if EI_CLASSIFIER_HAS_ANOMALY == 1
             printf("Anomaly prediction: %.3f\r\n", result.anomaly);
 #endif
-						
+
 #if defined(__PROFILE__)
             profiler.PrintProfilingResult();
-#endif						
+#endif
 
         }
     }
