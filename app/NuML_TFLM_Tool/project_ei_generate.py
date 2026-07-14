@@ -213,7 +213,11 @@ def ei_tflite_micro_h_update(tensor_arena_src_export_file, tensor_arena_dst_expo
             new_lines.extend(line + "\n" for line in lines_to_add)
             ei_classifier_allocation_static_found = True
         if "// Assign a no-op lambda to the" in line and not ei_ori_tensor_arena_found:
-            lines[i + 1] = "    //" + lines[i + 1]  # comment out the next line tensor_arena
+            for j in range(i + 1, min(i + 6, len(lines))):
+                if re.search(r'uint8_t\s+tensor_arena\[', lines[j]):
+                    lines[j] = "    //" + lines[j]
+                    ei_ori_tensor_arena_found = True
+                    break
             new_lines.append("    /* Nuvoton update, for MPU config*/" + "\n")
             ei_ori_tensor_arena_found = True
 
