@@ -7,6 +7,7 @@ import time
 import shutil
 import stat
 import fileinput
+import re
 from pathlib import Path
 
 import git
@@ -217,7 +218,6 @@ def ei_tflite_micro_h_update(tensor_arena_src_export_file, tensor_arena_dst_expo
                 if re.search(r'uint8_t\s+tensor_arena\[', lines[j]):
                     lines[j] = "    //" + lines[j]
                     ei_ori_tensor_arena_found = True
-                    break
             new_lines.append("    /* Nuvoton update, for MPU config*/" + "\n")
             ei_ori_tensor_arena_found = True
 
