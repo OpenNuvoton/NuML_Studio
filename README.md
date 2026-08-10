@@ -8,7 +8,7 @@ This is a UI tool for generating TFLM ML model projects and collecting real-time
 - Double-click `NuML_Studio.exe` to launch the tool.
     - If you want to upload to Edge Impulse or download single test data to deployment, please update your project API key in `API_key.txt`.
 
-- [Quick start guide](https://github.com/OpenNuvoton/NuML_Studio/tree/main/doc/QuickStart-EIProject.md) for using NuML_Studio and Edge Impulse Project.
+- [Quick start guide](doc/QuickStart/QuickStart-EIProject.md) for using NuML_Studio and Edge Impulse Project.
 
 - Other `*.exe` files are command-line programs. Please refer to the examples in `cmd.txt` or use the `-h` option for help.
     - Users can update the corresponding `*.int` file for each `*.exe` to perform testing, or execute the program without entering parameters.
